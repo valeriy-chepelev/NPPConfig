@@ -1,0 +1,83 @@
+<ModuleDescription xmlns="http://www.mtrele.ru/npp/2021">
+
+	<!-- расшифровка терминов для интерфейса -->
+	<Term name="Base" lang="RU">Базовый корпус</Term>
+	<Term name="Base" lang="EN">Host device</Term>
+	<Term name="Bus" lang="RU">Шина</Term>
+	<Term name="Exp" lang="RU">Расширение</Term>
+	<Term name="Expansion" lang="RU">Корпус расширения</Term>
+	<Term name="Module" lang="RU">Модуль</Term>
+	<Term name="Power" lang="RU">Источник питания</Term>
+	<Term name="HMI" lang="RU">Дисплей и органы управления</Term>
+	<Term name="DI" lang="RU">Дискретные входы</Term>
+	<Term name="DO" lang="RU">Дискретные выходы общего назначения</Term>
+	<Term name="FastDO" lang="RU">Быстродействующие дискретные выходы</Term>
+	<Term name="PowerDO" lang="RU">Дискретные выходы повышенной нагрузочной способности</Term>
+	
+	<!-- общие требования к конфигурации устройства -->
+	<Unit type="ROOT" edition="ROOT" ver="1" rev="0">
+		<Required property="Base" min="1" max="1"/>
+		<Required property="Power" min="1"/>
+		<Required property="HMI" min="1"/>
+		<Slot type="ROOT" ver="1" rev="0" addr="ROOT"/>
+	</Unit>
+	
+	<!-- Перечень аппаратных узлов и их возможностей -->
+	<Unit type="Base" edition="B1" ver="1" rev="0">
+		<Connect slot="ROOT" ver="1"/>
+		<Slot type="Bus" ver="1" rev="0" addr="1"/>
+		<Slot type="Bus" ver="1" rev="0" addr="2"/>
+		
+		<Slot type="Exp" ver="1" rev="0" addr="0" chain="1"/>
+		<Name lang="RU">Базовый корпус основной производительности со встроенным дисплеем</Name>
+		<Description lang="RU">
+		Базовый корпус для построения эффективных систем РЗиА с ограниченным объемом функций.
+		</Description>
+		<Resource name="Expansion" val="4"/>
+		<Resource name="RTData" val="100500"/>
+		<Property name="Base"/>
+		<Property name="HMI"/>
+		<Model/>
+	</Unit>
+	
+	<Unit type="Expansion" edition="X1" ver="1" rev="0">
+		<Required property="Base" min="1"/>
+		<Uses resource="Expansion" val="1"/>
+		<Connect slot="Exp" ver="1"/>
+		<Slot type="Bus" ver="1" rev="0" addr="1"/>
+		<Slot type="Bus" ver="1" rev="0" addr="2"/>
+		<Slot type="Exp" ver="1" rev="0" addr="0" chain="1"/>
+		<Name lang="RU">Корпус расширения</Name>
+		<Description lang="RU">
+		Корпус расширения для установки двух дополнительных модулей
+		</Description>
+	</Unit>
+	
+	<Unit type="Module" edition="MPC1" ver="1" rev="0">
+		<Required property="Base" min="1"/>
+		<Connect unit="Base" slot="Bus" ver="1"/>
+		<Name lang="RU">Модуль питания</Name>
+		<Description lang="RU">
+		Модуль питания устройства от сети переменного или постоянного тока с напряжением от 164 до 240 В.
+		Модуль устанавливается только в слот базового корпуса.
+		</Description>
+		<Property name="Power"/>
+		<Model/>
+	</Unit>
+	
+	<Unit type="Module" edition="DI12" ver="1" rev="0">
+		<Required property="Base" min="1"/>
+		<Uses resource="RTData" val="36"/>
+		<Connect slot="Bus" ver="1"/>
+		<Name lang="RU">Модуль дискретных входов</Name>
+		<Description lang="RU">
+		Модуль дискретных входов с номинальным постоянным напряжением 220 В.
+		Содержит 12 дискретных входов с регулируемым временем срабатывания.
+		Срабатывание только при прямой полярности.
+		Обеспечивается импульс тока режекции.
+		</Description>
+		<Property name="DI"/>
+		<Model id="GGIO_NPP_01"/>
+	</Unit>
+
+</ModuleDescription>
