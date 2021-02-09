@@ -3,6 +3,7 @@ import tkinter.ttk as ttk
 from tkinter.scrolledtext import ScrolledText
 from verticalscrolledframe import VerticalScrolledFrame as VSFrame
 import clientEngine as ce
+from textEngine import get_sys_text, get_lib_text, HTMLScrolledText
 
 
 class Application(Frame):
@@ -14,12 +15,13 @@ class Application(Frame):
     def createWidgets(self):
         top=self.winfo_toplevel()
         top.rowconfigure(0, minsize=400, weight=1)
-        top.columnconfigure(0, minsize=300, weight=1)
+        top.columnconfigure(0, minsize=400, weight=1)
 
-        self.pane = PanedWindow(master = self, bd=2, orient=HORIZONTAL, sashrelief = 'groove')
+        self.mainpane = PanedWindow(master = self, bd=2, orient=HORIZONTAL, sashrelief = 'groove')
+        self.libpane = PanedWindow(master = self.mainpane, bd=2, orient=VERTICAL, sashrelief = 'groove')
 
-        self.sysframe = Frame(master=self.pane, bd = 2, relief='groove')
-        self.systree = ttk.Treeview(master=self.sysframe, show='tree headings')
+        self.sysframe = Frame(master=self.mainpane, bd = 2, relief='groove')
+        self.systree = ttk.Treeview(master=self.sysframe, show='tree headings', selectmode='browse')
         self.systree["columns"]=("ed")
         self.systree.column("#0", width=150, minwidth=150)
         self.systree.column("ed", width=70, minwidth=70, stretch=NO)
@@ -35,9 +37,10 @@ class Application(Frame):
         self.systree['xscrollcommand'] = self.sys_hsb.set
         self.sys_hsb['command'] = self.systree.xview
         self.systree.pack(fill=BOTH, expand=True)
+        self.systree.bind("<<TreeviewSelect>>", self.on_sys_select)
 
-        self.libframe = Frame(master=self.pane, bd = 2, relief='groove')
-        self.libtree = ttk.Treeview(master=self.libframe, show='tree headings')
+        self.libframe = Frame(master=self.libpane, bd = 2, relief='groove')
+        self.libtree = ttk.Treeview(master=self.libframe, show='tree headings', selectmode='browse')
         self.libtree["columns"]=('kind', 'type')
         self.libtree.column("#0", width=150, minwidth=150)
         self.libtree.column("kind", width=100, minwidth=70, stretch=NO)
@@ -55,26 +58,54 @@ class Application(Frame):
         self.libtree['xscrollcommand'] = self.lib_hsb.set
         self.lib_hsb['command'] = self.libtree.xview
         self.libtree.pack(fill=BOTH, expand=True)
+        self.libtree.bind("<<TreeviewSelect>>", self.on_lib_select)
+        
 
-        self.infframe = Frame(master=self.pane, bd = 2, relief='flat')
+        self.infframe = Frame(master=self.mainpane, bd = 2, relief='flat')
+        self.htmlmain = HTMLScrolledText(master = self.infframe, padx=10, pady=2, state=DISABLED,
+                                         html = get_sys_text(None, None),
+                                         relief='flat', bd = 2)
+        self.htmlmain.pack(fill=BOTH, expand=True)
+
+        self.libinfframe = Frame(master=self.libpane, bd = 2, relief='flat')
+        self.htmllib = HTMLScrolledText(master = self.libinfframe, padx=10, pady=2, state=DISABLED,
+                                         html = get_lib_text(None),
+                                         relief='flat', bd = 2)
+        self.htmllib.pack(fill=BOTH, expand=True)
         
         self.statframe = Frame(master=self, padx=2, pady=2, bd = 2, relief='groove')
 
-        self.pane.add(self.sysframe, minsize=200)
-        self.pane.add(self.infframe, minsize=200)
-        self.pane.add(self.libframe, minsize=200)
+        self.mainpane.add(self.sysframe, minsize=200)
+        self.mainpane.add(self.infframe, minsize=200, width=400)
+        self.mainpane.add(self.libpane, minsize=200, width=200)
+        self.libpane.add(self.libframe, minsize=200)
+        self.libpane.add(self.libinfframe, minsize=100, height=200)
 
-        self.pane.grid(column=0, row=0, sticky='nesw')
-        self.statframe.grid(column=0, row=1, sticky='nesw')
+        self.statframe.grid(column=0, row=0, sticky='nesw')
+        self.mainpane.grid(column=0, row=1, sticky='nesw')
         
         self.columnconfigure(0, weight=1)
-        self.rowconfigure(0, weight=1)
-        self.rowconfigure(1, weight=0)
+        self.rowconfigure(0, minsize=30, weight=0)
+        self.rowconfigure(1, weight=1)
 
         self.makeLibTree()
         self.makeTree()
         self.makeStat()
 
+    def on_sys_select(self, * args):
+        lib = self.libtree.focus()
+        if lib == '': lib = None
+        unit = self.systree.focus()
+        if unit == '': unit = None
+        self.htmlmain.set_html(get_sys_text(unit, lib))
+        
+    def on_lib_select(self, * args):
+        lib = self.libtree.focus()
+        if lib == '': lib = None
+        unit = self.systree.focus()
+        if unit == '': unit = None
+        self.htmlmain.set_html(get_sys_text(unit, lib))
+        self.htmllib.set_html(get_lib_text(lib))
 
     def makeLibTree(self):
         for unit in ce.getLibUnits():
@@ -112,6 +143,7 @@ class Application(Frame):
                 else:
                     self.systree.insert(parent = slotpos,
                                         index = END,
+                                        iid = data['unit'] + '|' + slot['addr'],
                                         text=('' if slot['type']=='ROOT' else slot['addr'])+': ---',
                                         values=(ce.getTerm(slot['type'])))
             
@@ -120,5 +152,5 @@ class Application(Frame):
             
 app = Application()
 app.master.title('NPP Configurator Client')
-app.master.minsize(400, 300)
+app.master.minsize(400, 400)
 app.mainloop()

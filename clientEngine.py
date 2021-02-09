@@ -11,13 +11,16 @@ def getTerm(term):
     if r.status_code == 200: return r.json()
     return term
 
-def getLibUnits():
-    r = RQ.get(_url('hwlib/units'))
+def getLibUnits(lib=''):
+    payload = {'id' : lib}
+    r = RQ.get(_url('hwlib/units')) if lib=='' else RQ.get(_url('hwlib/units'), data=payload)
     if r.status_code == 200: return r.json()
     raise AssertionError('Server error ' + str(r.status_code))
 
-def getPrjUnits():
-    payload = {'mode' : 'full'}
+
+def getPrjUnits(unit=''):
+    payload = {'mode' : 'full', 'unit' : unit}
+    if unit == '': payload = {'mode' : 'full'}
     r = RQ.get(_url('cfg/units'), data=payload)
     if r.status_code == 200: return r.json()
     raise AssertionError('Server error ' + str(r.status_code))
