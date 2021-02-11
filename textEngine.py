@@ -44,21 +44,24 @@ def get_sys_text(unit, library):
 def get_lib_text(library):
     return T_SEL_LIB_TIP if library is None else lib_text(library)
 
+def split_unit_iid(unit_iid):
+    if '|' in unit_iid:
+        u_spl = unit_iid.split('|')
+        return None, u_spl[0], u_spl[1]
+    u_spl = unit_iid.split('@')
+    return u_spl[0], u_spl[1], u_spl[2]
 
 def unit_text(unit):
-    if '|' in unit:
-        u_spl = unit.split('|')
-        aunit = u_spl[0]
-        addr = u_spl[1]
-        data = ce.getPrjUnits(aunit)
+    (aunit, parent, addr) = split_unit_iid(unit)
+    if aunit is None:
+        data = ce.getPrjUnits(parent)
         slot = next(item for item in data['slots'] if item["addr"] == addr)
         s = '<h6>Место подключения</h6><div>Может быть установлен любой совместимый (суб-)модуль.</div>'
         s = s + '<ul><li>база: %s</li>' % data['name']
         s = s + '<li>тип соединения: %s</li>' % ce.getTerm(slot['type'])
         s = s + '<li>позиция: %s</li></ul>' % addr
         return s
-    u_spl = unit.split('@')
-    data = ce.getPrjUnits(u_spl[0])
+    data = ce.getPrjUnits(aunit)
     s = '<div><a href="del_unit">Удалить "%s"</a> ' % data['name']
     s = s + 'из устройства (будут удалены подключенные к нему субмодули).</div>'
     s = '%s<h6>%s</h6><div>%s</div>' % (s, data['name'], data['desc'])
@@ -82,9 +85,15 @@ def lib_text(library):
     return s
 
 def insert_text(unit, library):
+    (aunit, parent, addr) = split_unit_iid(unit)
     lib_data = ce.getLibUnits(library)
-    s = '<div><a href="ins_unit">Установить "%s"</a> ' % lib_data['name']
-    s = s + 'на выбранное место.</div>'
+    s = ''
+    if library in [item['id'] for item in ce.getLibUnits(unit = unit) if item['match']]:
+        s = '<div><a href="ins_unit">Установить "%s"</a> ' % lib_data['name']
+        s = s + 'на выбранное место.'
+        if aunit is not None:
+            s = s + '<br><span style="color: red">Это действие заменит "%s"!</span>' % ce.getPrjUnits(aunit)['name']
+        s = s + '</div>'
     return s
 
 #-------------------- the followed is imported from tkhtml----------------

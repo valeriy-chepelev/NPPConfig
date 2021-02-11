@@ -131,9 +131,7 @@ class Application(Frame):
         unit = self.modules_tree.focus()
         if unit == '': unit = None
         self.main_html.set_html(get_sys_text(unit, lib))
-        # temporary - update lib to see highlihts
-        self.lib_tree.delete(*self.lib_tree.get_children())
-        self.fill_lib_tree(data = ce.getLibUnits(unit = unit))
+        self.update_lib_tree(data = ce.getLibUnits(unit = unit))
         
     def on_lib_select(self, * args):
         lib = self.lib_tree.focus()
@@ -142,9 +140,7 @@ class Application(Frame):
         if unit == '': unit = None
         self.main_html.set_html(get_sys_text(unit, lib))
         self.lib_html.set_html(get_lib_text(lib))
-        # temporary - update units to see highlihts
-        self.modules_tree.delete(*self.modules_tree.get_children())
-        self.fill_modules_tree(data = ce.getPrjUnits(lib = lib))
+        self.update_modules_tree(data = ce.getPrjUnits(lib = lib, mode = 'short'))
 
     def fill_lib_tree(self, data):
         for unit in data:
@@ -155,6 +151,11 @@ class Application(Frame):
                                  text = unit['name'],
                                  values = (ce.getTerm(unit['type']),unit['id']),
                                  tags='MATCH' if unit['match'] else '')
+
+    def update_lib_tree(self, data):
+        for unit in data:
+            if unit['type']=='ROOT': continue
+            self.lib_tree.item(item = unit['id'], tags='MATCH' if unit['match'] else '')
 
     def makeStat(self):
         data = ce.getStatus()
@@ -168,7 +169,7 @@ class Application(Frame):
         else: pos = self.modules_tree.insert(parent = parent,
                                              index = END,
                                              iid = data['unit'] + '@' + data['parent'],
-                                             text=prefix + ce.getTerm(data['type']),
+                                             text=prefix + data['name'],
                                              values=(data['lib']),
                                              tags='MATCH' if data['match'] else '',
                                              open='True')
@@ -187,6 +188,17 @@ class Application(Frame):
                                          text=('' if slot['type']=='ROOT' else slot['addr'] + ': ')+'---',
                                          values=(ce.getTerm(slot['type'])),
                                          tags='MATCH' if slot['match'] else '')
+
+    def update_modules_tree(self, data):
+        if data['type']!='ROOT': self.modules_tree.item(item = data['unit'] + '@' + data['parent'],
+                                                        tags = 'MATCH' if data['match'] else '')
+        for slot in data['slots']:
+            if slot['unit'] is not None:
+                self.update_modules_tree(data = slot['unit']|{'match':slot['match'], # indicates slot match for a selected library
+                                                              'parent':data['unit'] + '@' + slot['addr']}) #parental unit/slot for future library match for selected unit 
+            else:
+                self.modules_tree.item(item = data['unit'] + '|' + slot['addr'],
+                                       tags = 'MATCH' if slot['match'] else '')
             
 app = Application()
 app.master.title('NPP Configurator Client')
