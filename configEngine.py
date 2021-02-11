@@ -94,13 +94,10 @@ def getStatus():
 
 # aiming units
 
-def _isConnectable(conn, slot):
-    unit_type = slot.getparent().get('type')
-    req_type = conn.get('unit') if 'unit' in conn.attrib else unit_type
-    return all([
-        unit_type == req_type, #required unit match
-        slot.get('type') == conn.get('slot'), #slot is a same type
-        int(slot.get('ver')) >= int(conn.get('ver'))]) # slot is newer (back-compatible)
+def get_slot(unitId, addr):
+    unit = hwConfig.find('.//npp:Unit[@id="%s"]' % unitId, ns)
+    return HWL.hwLibrary.find('./npp:Unit[@id="%s"]/npp:Slot[@addr="%s"]' %
+                              (unit.get('lib'), addr) , ns)
 
 def canConnectUnit(libId, unitId, addr):
     # check is library unit can be connected to a selected slot
@@ -109,7 +106,9 @@ def canConnectUnit(libId, unitId, addr):
     slot = HWL.hwLibrary.find('./npp:Unit[@id="%s"]/npp:Slot[@addr="%s"]' %
                               (unit.get('lib'), addr) , ns)
     connected = unit.find('./npp:Unit[@addr="%s"]' % addr, ns)
-    return connected is None and _isConnectable(connector, slot)
+    return connected is None and MU.is_compatible(conn = connector, slot = slot)
+
+    
 
 # working with units
 
@@ -122,12 +121,12 @@ def _dumpSlots(unit, match, recurse, mode):
     
     def subdata(unit, match, slot, recurse, mode):
         subunit = unit.find('./npp:Unit[@addr="%s"]' % slot.get('addr'), ns)
-        if subunit is None:
-            return 'FREE' if match is not None and _isConnectable(match, slot) else None
+        if subunit is None: return None
         return _dumpUnit(subunit, match, recurse, mode) if recurse else subunit.get('id')
         
     return [ {'addr' : slot.get('addr'),
               'type' : slot.get('type'),
+              'match' : match is not None and MU.is_compatible(conn = match, slot = slot),
               'unit' : subdata(unit, match, slot, recurse, mode)}
         for slot in HWL.hwLibrary.findall('./npp:Unit[@id="%s"]/npp:Slot' % unit.get('lib'), ns)]
 
@@ -188,7 +187,7 @@ def delUnit(unitId):
     if chained is not None:
         connector = HWL.hwLibrary.find('./npp:Unit[@id="%s"]/npp:Connect' % chained.get('lib'), ns)
         slot = HWL.hwLibrary.find('./npp:Unit[@id="%s"]/npp:Slot[@chain="1"]' % parent.get('lib'), ns)
-        if _isConnectable(connector, slot):
+        if MU.is_compatible(conn = connector, slot = slot):
             parent.append(chained)
             chained.attrib.update({'addr' : unit.get('addr')})
     parent.remove(unit)

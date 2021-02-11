@@ -11,16 +11,30 @@ def getTerm(term):
     if r.status_code == 200: return r.json()
     return term
 
-def getLibUnits(lib=''):
-    payload = {'id' : lib}
-    r = RQ.get(_url('hwlib/units')) if lib=='' else RQ.get(_url('hwlib/units'), data=payload)
+def getLibUnits(lib='', unit=''):
+    payload = dict()
+    if lib != '':
+        payload.update({'id' : lib})
+    if unit != '':
+        if '|' in unit:
+            spl_unit = unit.split('|')
+            unitId = spl_unit[0]
+            addr = spl_unit[1]
+        if '@' in unit:
+            spl_unit = unit.split('@')
+            unitId = spl_unit[1]
+            addr = spl_unit[2]
+        payload.update({'unit' : unitId, 'addr' : addr})
+        
+    r = RQ.get(_url('hwlib/units'), data=payload)
     if r.status_code == 200: return r.json()
     raise AssertionError('Server error ' + str(r.status_code))
 
 
-def getPrjUnits(unit=''):
-    payload = {'mode' : 'full', 'unit' : unit}
-    if unit == '': payload = {'mode' : 'full'}
+def getPrjUnits(unit='', lib='', mode='full'):
+    payload = {'mode' : mode}
+    if unit != '': payload.update ({'unit' : unit})
+    if lib !='': payload.update ({'id' : lib})
     r = RQ.get(_url('cfg/units'), data=payload)
     if r.status_code == 200: return r.json()
     raise AssertionError('Server error ' + str(r.status_code))

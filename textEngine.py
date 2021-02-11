@@ -20,8 +20,8 @@ T_GOODCONF = '''<h6>Устройство сконфигурировано.</h6><
 T_INS_TIP = '''<div style="text-align: center">Чтобы добавить модуль из библиотеки в устройство,<br>
 выберите модуль в библиотеке \u261B <br>
 \u261A и выберите место для его установки в устройство.<br>
-Совместимые позиции <span style="color: green">
-выделяются зеленым цветом</span>.</div>'''
+Совместимые позиции <span style="background-color: cyan">
+выделяются цветом</span>.</div>'''
         
 
 def get_sys_text(unit, library):
@@ -57,7 +57,8 @@ def unit_text(unit):
         s = s + '<li>тип соединения: %s</li>' % ce.getTerm(slot['type'])
         s = s + '<li>позиция: %s</li></ul>' % addr
         return s
-    data = ce.getPrjUnits(unit)
+    u_spl = unit.split('@')
+    data = ce.getPrjUnits(u_spl[0])
     s = '<div><a href="del_unit">Удалить "%s"</a> ' % data['name']
     s = s + 'из устройства (будут удалены подключенные к нему субмодули).</div>'
     s = '%s<h6>%s</h6><div>%s</div>' % (s, data['name'], data['desc'])

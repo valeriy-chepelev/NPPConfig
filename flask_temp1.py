@@ -56,9 +56,13 @@ class LibUnit(Resource):
         if id == '':
             if args['id'] is not None: id = args['id']
             elif args['tag'] is not None: id = HWL.idByTag(args['tag'])
+        if args['unit'] is not None and args['addr'] is not None:
+            target_slot = CFG.get_slot(args['unit'], args['addr'])
+        else:
+            target_slot = None
         if id == '':
-            return HWL.listUnits(), 200
-        return HWL.getUnit(id), 200
+            return HWL.listUnits(matching_slot = target_slot), 200
+        return HWL.getUnit(id = id, matching_slot = target_slot), 200
 
     @libErrHandler
     def put(self, id=''):

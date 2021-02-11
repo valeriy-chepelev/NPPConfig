@@ -48,7 +48,7 @@ def _recodeReq(rec):
     return { key: int(rec[key]) if rec[key].isdigit() else rec[key]
              for key in rec}
 
-def _dumpUnit(unit):
+def _dumpUnit(unit, matching_slot = None):
     return {'id': unit.get('id'),
             'type': unit.get('type'),
             'edition': unit.get('edition'),
@@ -61,11 +61,13 @@ def _dumpUnit(unit):
             'req': [_recodeReq(dict(req.items())) for req in
                     unit.findall('./npp:Required', ns)],
             #TODO: 'status'
-            'tag': unit.get('tag')}
+            'tag': unit.get('tag'),
+            'match': matching_slot is not None and MU.is_compatible(conn = unit.find('./npp:Connect', ns),
+                                                                    slot = matching_slot) }
     
  
-def getUnit(id):
-    return _dumpUnit(hwLibrary.find('./npp:Unit[@id="%s"]' % id, ns))
+def getUnit(id, matching_slot = None):
+    return _dumpUnit(hwLibrary.find('./npp:Unit[@id="%s"]' % id, ns), matching_slot)
 
 def idByTag(tag):
     return hwLibrary.find('./npp:Unit[@tag="%s"]' % MU.normalTag(tag), ns).get('id')
@@ -75,8 +77,8 @@ def setUnitTag(id, tag:str = ''):
     hwLibrary.find('.//npp:Unit[@id="%s"]' % id, ns).set('tag', s)
     return s
                 
-def listUnits():
-    return [_dumpUnit(unit) for unit in hwLibrary.findall('./npp:Unit', ns)]
+def listUnits(matching_slot = None):
+    return [_dumpUnit(unit, matching_slot) for unit in hwLibrary.findall('./npp:Unit', ns)]
 
 def setLang(newlang):
     global lang

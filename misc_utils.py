@@ -32,3 +32,12 @@ def safeName(unit, lang):
 def safeDesc(unit, lang):
     desc = unit.find('./npp:Description[@lang="%s"]' % lang, ns)
     return '' if desc is None else ('\n'.join(line.strip() for line in desc.text.splitlines())).strip()
+
+def is_compatible(conn, slot):
+    if slot is None or conn is None: return False
+    unit_type = slot.getparent().get('type')
+    req_type = conn.get('unit') if 'unit' in conn.attrib else unit_type
+    return all([
+        unit_type == req_type, #required unit match
+        slot.get('type') == conn.get('slot'), #slot is a same type
+        int(slot.get('ver')) >= int(conn.get('ver'))]) # slot is newer (back-compatible)
