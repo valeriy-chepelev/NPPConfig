@@ -142,6 +142,7 @@ class Unit(Resource):
         args = parser.parse_args()
         unit = None
         mode = None
+        move_dir_up = None
         if args['unit'] is not None: unit = args['unit']
         elif args['tag'] is not None: unit = CFG.idByTag(args['tag'])
         if args['mode'] == 'short': mode = CFG.DUMP_SHORT
@@ -150,14 +151,27 @@ class Unit(Resource):
             if mode is None: mode = CFG.DUMP_SHORT
             return CFG.listUnits(args['id'], mode), 200
         if mode is None: mode = CFG.DUMP_FULL
+        if args['cmd'] is not None:
+            if args['cmd'] == 'up': move_dir_up = True
+            elif args['cmd'] == 'down': move_dir_up = False
+            if move_dir_up is not None:
+                return CFG.move_unit(unit, move_dir_up, dry_run = True), 200
         return CFG.getUnit(unit, args['id'], mode), 200
 
     @libErrHandler
     def put(self):
         args = parser.parse_args()
         unit = None
+        move_dir_up = None
         if args['unit'] is not None: unit = args['unit']
         elif args['tag'] is not None: unit = CFG.idByTag(args['tag'])
+        if unit is not None and args['cmd'] is not None:
+            if args['cmd'] == 'up': move_dir_up = True
+            elif args['cmd'] == 'down': move_dir_up = False
+            if move_dir_up is not None:
+                if CFG.move_unit(unit, move_dir_up, dry_run = False):
+                    return CFG.getUnit(unit, None), 201
+                else: return 'Unable to move', 400
         if unit is None or args['newtag'] is None:
             return 'Bad request', 400
         return CFG.setUnitTag(unit, args['newtag']), 201

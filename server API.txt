@@ -1,0 +1,139 @@
+Server REST API description
+-----------
+Resource: Library language
+
+GET /lang
+Return 200 and dictionary of supported languages and terms coverage
+
+GET /lang/active
+Return 200 and string with active language code
+
+PUT /lang?active=RU
+Changes active language
+Return 201 and string with new active language code
+Return 400 if language not supported
+
+-----------
+Resource: Library terms
+
+GET /hwlib/terms
+Return 200 and dictionary of terms paired to active language
+
+GET/hwlib/terms?term=Power
+Return 200 and string value in active language
+Return 404 if term not found in active language
+
+-----------
+Resource: Library items (units)
+
+GET /hwlib/units
+Return 200 and list of library units (each unit is a dictionary-based structure)
+
+GET /hwlib/units?id=B1-1-0
+Return 200 and requested unit data in a dictionary-based structure
+Return 404 if unit not found
+
+PUT /hwlib/units?id=B1-1-0&newtag=foo
+Changes unit tag value (default '')
+Returns 201 and string with a new tag value (alphanumeric, can be trimmed at POST)
+Return 404 if unit not found
+
+GET /hwlib/units?tag=foo
+Return 200 and only first tag-matched unit with data in a dictionary-based structure
+Return 404 if unit not found
+
+PUT /hwlib/units?tag=foo&newtag=boo
+Retag :), see PUT above
+
+GET /hwlib/units?id=B1-1-0&tag=boo
+doubling ids: tag value will be ignored, see GET above
+
+GET /hwlib/units?unit=<UUID>&addr=1
+Checks a possibility to install each library unit to the config place,
+described by unit 'UUID' and slot 'addr'. Returns calculated boolean values in a 'match' field of every library unit.
+Return 200 and requested unit data with calculated 'match'. 
+Return 404 if UUID not found in config.
+
+GET /hwlib/units?unit=<UUID>&addr=1&id=B1-1-0
+GET /hwlib/units?unit=<UUID>&addr=1&tag=foo
+Return 200 and requested unit data with calculated 'match'(see above). 
+Return 404 if library unit not found or UUID not cound in config.
+
+-----------
+Resource: Configuration status
+
+GET /cfg/stat
+Return 200 and dictionary of Requirements and Resources boolean status
+
+GET /cfg/stat/res
+Return 200 and list of resources values
+
+GET /cfg/stat/req
+Return 200 and list of all requirements
+
+OBSOLETE, debug functoionality!
+POST /cfg/stat?cmd=save
+POST /cfg/stat?cmd=load
+Saves/loads config to/from temp xml file.
+Return 202 and string 'Save'/'Load'
+
+-----------
+Resource: Configuration items (units)
+
+GET /cfg/units
+GET /cfg/units?mode=short
+Return 200 and full configuration as dictionary-based structure, starting from the ROOT
+
+GET /cfg/units?mode=full
+Return 200 and full configuration as dictionary-based structure with MORE data fields, starting from the ROOT
+
+GET /cfg/units?unit=<UUID>
+GET /cfg/units?unit=<UUID>&mode=full
+Return 200 and unit data fields in dictionary-based structure
+Return 404 if UUID not found in config.
+
+GET /cfg/units?unit=<UUID>&mode=short
+Return 200 and LESS unit data fields in dictionary-based structure.
+Return 404 if UUID not found in config.
+
+PUT /cfg/units?unit=<UUID>&newtag=foo
+Changes unit tag value (default '')
+Returns 201 and string with a new tag value (alphanumeric, can be trimmed at POST)
+Return 404 if unit not found
+
+GET /cfg/units?tag=foo[&mode=full|short]
+Return 200 and only first tag-matched unit with data in a dictionary-based structure
+Return 404 if unit not found
+
+PUT /cfg/units?tag=foo&newtag=boo
+Retag :), see PUT above
+
+GET /cfg/units?unit=<UUID>&tag=boo[&mode=full|short]
+doubling ids: tag value will be ignored, see GET above
+
+GET /cfg/units?id=DI12-1-0[&unit=<UUID> | tag=boo][&mode=full|short]
+Checks a possibility to install described by 'id' library unit to the config unit(s) slots. Returns calculated boolean values in a 'match' field of every slot of library unit(s).
+Return 200 and requested unit(s) data with calculated 'match'. 
+Return 404 if unit not found.
+
+POST /cfg/units?[unit=<UUID> | tag=boo]&addr=2&id=MPC1-1-0
+Installs selected by 'id' library unit to the slot 'addr' of config unit, described by 'UUID' or 'tag'
+Return 201 and new unit data structure in 'full'-mode
+Return 404 if config unit not found
+Return 400 if can't install or library unit not found
+
+DELETE /cfg/units?[unit=<UUID> | tag=boo]
+Deletes a unit and it's subunits, trying to reconnect chained subunits
+Return 204 on success
+Return 404 if unit not found
+
+GET /cfg/units?cmd=[up|down]&[unit=<UUID> | tag=boo]
+Checks is described config unit can be moved up or down in a configuration hierarhy.
+Return 200 and boolean value (can or not)
+Return 404 if unit not found
+
+PUT /cfg/units?cmd=[up|down]&[unit=<UUID> | tag=boo]
+Moves described config unit up or down in a configuration hierarhy.
+Return 201 and unit data structure after sucess move
+Return 400 if unit can't be moved in that direction
+Return 404 if unit not found
