@@ -99,6 +99,15 @@ def get_slot(unitId, addr):
     return HWL.hwLibrary.find('./npp:Unit[@id="%s"]/npp:Slot[@addr="%s"]' %
                               (unit.get('lib'), addr) , ns)
 
+def get_ch_slot(unit):
+    return HWL.hwLibrary.find('./npp:Unit[@id="%s"]/npp:Slot[@chain="1"]' %
+                              unit.get('lib'), ns)
+
+def get_conn(unit):
+    return HWL.hwLibrary.find('./npp:Unit[@id="%s"]/npp:Connect' %
+                              unit.get('lib'), ns)
+
+
 def canConnectUnit(libId, unitId, addr):
     # check is library unit can be connected to a selected slot
     connector = HWL.hwLibrary.find('./npp:Unit[@id="%s"]/npp:Connect' % libId, ns)
@@ -117,13 +126,11 @@ def move_unit(unit_id, dir_up = False, dry_run = False):
     Returns True on success, False - if move is not possible
     '''
 
-    def _parse_slots(slot_list, owner, chain = False):
+    def _swap_bus_slots(slot_list, owner):
         nonlocal my_unit, my_connector, my_slot, dir_up, dry_run
         for slot in slot_list:
             replacer = owner.find('./npp:Unit[@addr="%s"]' % slot.get('addr'), ns)
-            # check my_connector match to slot
             if MU.is_compatible(conn = my_connector, slot = slot):
-                # check is slot busy                
                 if replacer is None and not owner is my_unit:
                     # reinstall to new free place, return true
                     if not dry_run:
@@ -132,10 +139,8 @@ def move_unit(unit_id, dir_up = False, dry_run = False):
                         my_unit.set('addr', slot.get('addr'))
                     return True
                 elif replacer is not None and not replacer is my_unit:
-                    # get rep_connector
                     rep_connector = HWL.hwLibrary.find('./npp:Unit[@id="%s"]/npp:Connect' %
                                                        replacer.get('lib'), ns)
-                    # check rep match to my_slot
                     if MU.is_compatible(conn = rep_connector, slot = my_slot):
                         # swap units, return true
                         if not dry_run:
@@ -145,14 +150,33 @@ def move_unit(unit_id, dir_up = False, dry_run = False):
                             owner.append(my_unit)
                             my_unit.set('addr', slot.get('addr'))
                         return True
-            elif not chain and replacer is not None:
+            elif replacer is not None:
                 #recursevly check inner units according to direction
                 inner_slot_list = HWL.hwLibrary.findall('./npp:Unit[@id="%s"]/npp:Slot' %
                                                         replacer.get('lib'), ns)
                 if dir_up: inner_slot_list.reverse()
-                if _parse_slots(inner_slot_list, replacer): return True
+                if _swap_bus_slots(inner_slot_list, replacer): return True
         return False
 
+    def _swap_chain_slots(owner, swap1, swap2, child):
+        nonlocal dry_run
+        child_ok = True if child is None else MU.is_compatible(
+            conn = get_conn(child), slot = get_ch_slot(swap1))
+        if not (MU.is_compatible(conn = get_conn(swap2), slot = get_ch_slot(owner)) and
+                MU.is_compatible(conn = get_conn(swap1), slot = get_ch_slot(swap2)) and
+                child_ok): return False
+        if not dry_run:
+            #TODO: undo_stack_add()
+            if child is not None:
+                swap1.append(child)
+                child.set('addr', swap2.get('addr'))
+            owner.append(swap2)
+            swap2.set('addr', swap1.get('addr'))
+            swap2.append(swap1)
+            slot = HWL.hwLibrary.find('./npp:Unit[@id="%s"]/npp:Slot[@chain="1"]' %
+                                      swap2.get('lib'), ns)
+            swap1.set('addr', slot.get('addr'))
+        return True
     
     # take my.connector and my.parent_slot
     my_unit = hwConfig.find('.//npp:Unit[@id="%s"]' % unit_id, ns)
@@ -160,25 +184,32 @@ def move_unit(unit_id, dir_up = False, dry_run = False):
                                       my_unit.get('lib'), ns)
     my_slot = HWL.hwLibrary.find('./npp:Unit[@id="%s"]/npp:Slot[@addr="%s"]' %
                               (my_unit.getparent().get('lib'), my_unit.get('addr')) , ns)
-    # look for replacers
-    # first - look in childs/parents for case of chain connection
+    # route for chain connections
     if my_slot.get('chain'):
         if dir_up:
-            target_parent = my_unit.getparent()
-            child = my_unit
-            while target_parent.get('id') != ROOT_ID:
-                slot_list = HWL.hwLibrary.findall('./npp:Unit[@id="%s"]/npp:Slot[@chain="1"]' %
-                                                  target_parent.get('lib'), ns)
-                if _parse_slots(slot_list, target_parent, chain = True): return True
-                child = target_parent
-                target_parent = child.getparent()
-        else:
-            slot_list = HWL.hwLibrary.findall('./npp:Unit[@id="%s"]/npp:Slot[@chain="1"]' %
-                                          my_unit.get('lib'), ns)
-            if _parse_slots(slot_list, my_unit, chain = True): return True
+            replacer = my_unit.getparent()
+            owner = replacer.getparent()
+            child_slot = get_ch_slot(my_unit)
+            child = None if child_slot is None else my_unit.find(
+                './npp:Unit[@addr="%s"]' % child_slot.get('addr'), ns)
+            if _swap_chain_slots(owner, replacer, my_unit, child):
+                return True
+        else: # direction = down
+            owner = my_unit.getparent()
+            replacer_slot = get_ch_slot(my_unit)
+            replacer = None if replacer_slot is None else my_unit.find(
+                './npp:Unit[@addr="%s"]' % replacer_slot.get('addr'), ns)
+            #print('owner %s' % owner.get('id'))
+            #print('replacer %s' % replacer.get('id'))
+            if replacer is None: return False
+            child_slot = get_ch_slot(replacer)
+            child = None if child_slot is None else replacer.find(
+                './npp:Unit[@addr="%s"]' % child_slot.get('addr'), ns)
+            if _swap_chain_slots(owner, my_unit, replacer, child):
+                return True
         return False
 
-    # second - look in parental structures
+    # route for bus connections
     target_parent = my_unit.getparent()
     child = my_unit
     while target_parent.get('id') != ROOT_ID:
@@ -188,7 +219,7 @@ def move_unit(unit_id, dir_up = False, dry_run = False):
                          if slot.get('addr') == child.get('addr'))
         slot_list = slot_list[: child_pos] if dir_up else slot_list[child_pos+1 :]
         if dir_up: slot_list.reverse()
-        if _parse_slots(slot_list, target_parent): return True
+        if _swap_bus_slots(slot_list, target_parent): return True
         child = target_parent
         target_parent = child.getparent()
     return False
@@ -248,17 +279,40 @@ class AddError(Exception):
     pass
 
 def addUnit(libId, unitId, addr):
-    if not canConnectUnit(libId, unitId, addr):
+    connector = HWL.hwLibrary.find('./npp:Unit[@id="%s"]/npp:Connect' % libId, ns)
+    unit = hwConfig.find('.//npp:Unit[@id="%s"]' % unitId, ns)
+    slot = HWL.hwLibrary.find('./npp:Unit[@id="%s"]/npp:Slot[@addr="%s"]' %
+                              (unit.get('lib'), addr) , ns)
+    if not MU.is_compatible(conn = connector, slot = slot):
         raise AddError('Library unit incompatible to slot')
     lib = HWL.hwLibrary.find('./npp:Unit[@id="%s"]' % libId, ns)
-    unit = hwConfig.find('.//npp:Unit[@id="%s"]' % unitId, ns)
+    old_unit = unit.find('./npp:Unit[@addr="%s"]' % addr, ns)
     #Create unit and NOT copy all the data from lib
-    newunit = ET.SubElement(unit,nsURI+'Unit', nsmap=nsMap )
-    newunit.attrib.update({'id' : str(uid()),
-                           'lib' : libId,
-                           'addr' : addr,
-                           'tag' : ''})
-    return getUnit(newunit.get('id'), None)
+    new_unit = ET.SubElement(unit,nsURI+'Unit', nsmap=nsMap )
+    new_unit.attrib.update({'id' : str(uid()),
+                            'lib' : libId,
+                            'addr' : addr,
+                            'tag' : ''})
+    #Move old unit childs, if present
+    if old_unit is not None:
+        for child in old_unit.findall('./npp:Unit', ns):
+            child_conn = get_conn(child)
+            # check slot with the same addr
+            new_slot = next ((slot for slot in HWL.hwLibrary.findall(
+                './npp:Unit[@id="%s"]/npp:Slot[@addr="%s"]' % (new_unit.get('lib'), child.get('addr')), ns) if new_unit.find(
+                    './npp:Unit[@addr="%s"]' % slot.get('addr'), ns) is None and MU.is_compatible(
+                        conn = child_conn, slot = slot)), None)
+            if new_slot is None:
+                # find any compatible free slot
+                new_slot = next ((slot for slot in HWL.hwLibrary.findall(
+                    './npp:Unit[@id="%s"]/npp:Slot' % new_unit.get('lib'), ns) if new_unit.find(
+                        './npp:Unit[@addr="%s"]' % slot.get('addr'), ns) is None and MU.is_compatible(
+                            conn = child_conn, slot = slot)), None)
+            if new_slot is not None:
+                new_unit.append(child)
+                child.set('addr',new_slot.get('addr'))
+        unit.remove(old_unit)
+    return getUnit(new_unit.get('id'), None)
 
 def delUnit(unitId):
     if unitId == ROOT_ID: raise AssertionError()

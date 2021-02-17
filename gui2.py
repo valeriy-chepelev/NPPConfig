@@ -16,9 +16,9 @@ def fixed_map(option):
     # should be future-safe.
     return [elm for elm in style.map('Treeview', query_opt=option) if
         elm[:2] != ('!disabled', '!selected')]
-
 style = ttk.Style()
 style.map('Treeview', foreground=fixed_map('foreground'), background=fixed_map('background'))
+# fix end
 
 class ScrolledTree(ttk.Treeview):
     def __init__(self, master=None, **kw):
@@ -98,6 +98,13 @@ class Application(Frame):
                                           padx=10, pady=2,
                                           state=DISABLED,
                                           html = get_sys_text(None, None))
+        self.main_html.bind('<<get_order>>', self.on_get_order)
+        self.main_html.bind('<<req_info>>', self.on_req_info)
+        self.main_html.bind('<<del_unit>>', self.on_del_unit)
+        self.main_html.bind('<<reset_unit>>', self.on_reset_unit)
+        self.main_html.bind('<<move_up_unit>>', self.on_move_up_unit)
+        self.main_html.bind('<<move_dn_unit>>', self.on_move_dn_unit)
+        self.main_html.bind('<<ins_unit>>', self.on_ins_unit)
 
         self.lib_html = HTMLScrolledText(master = self.lib_pane,
                                          relief='flat', bd = 2,
@@ -124,6 +131,36 @@ class Application(Frame):
         self.fill_lib_tree(data = ce.getLibUnits())
         self.fill_modules_tree(data = ce.getPrjUnits())
         self.makeStat()
+        
+    def on_get_order(self, * args):
+        pass
+
+    def on_req_info(self, * args):
+        pass
+
+    def on_del_unit(self, * args):
+        iid = self.modules_tree.focus()
+        ce.del_unit(iid.split('@')[0])
+        self.update_modules()
+
+    def on_reset_unit(self, * args):
+        pass
+
+    def on_move_up_unit(self, * args):
+        iid = self.modules_tree.focus()
+        ce.move_up_unit(iid.split('@')[0])
+        self.update_modules()
+
+    def on_move_dn_unit(self, * args):
+        iid = self.modules_tree.focus()
+        ce.move_dn_unit(iid.split('@')[0])
+        self.update_modules()
+
+    def on_ins_unit(self, * args):
+        iid = self.modules_tree.focus()
+        lib = self.lib_tree.focus()
+        ce.ins_new_unit(iid, lib)
+        self.update_modules()
 
     def on_module_select(self, * args):
         lib = self.lib_tree.focus()
@@ -199,6 +236,14 @@ class Application(Frame):
             else:
                 self.modules_tree.item(item = data['unit'] + '|' + slot['addr'],
                                        tags = 'MATCH' if slot['match'] else '')
+
+    def update_modules(self):
+        focused  = self.modules_tree.focus()
+        self.modules_tree.delete(*self.modules_tree.get_children())
+        self.fill_modules_tree(data = ce.getPrjUnits())
+        if self.modules_tree.exists(focused): self.modules_tree.focus(focused)
+        self.on_lib_select()
+        
             
 app = Application()
 app.master.title('NPP Configurator Client')

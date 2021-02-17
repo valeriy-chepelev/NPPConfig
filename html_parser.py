@@ -2,7 +2,7 @@
 HTML parser
 """
 import os
-import webbrowser
+#import webbrowser
 import tkinter as tk
 from tkinter import font
 from copy import deepcopy
@@ -11,7 +11,6 @@ from html.parser import HTMLParser
 from collections import OrderedDict
 import requests
 from io import BytesIO
-import commander
 
 #__________________________________________________________________________________________________
 class Defs():
@@ -195,8 +194,8 @@ class HLinkSlot():
 
     def call(self, event):
         #------------------------------------------------------------------------------------------
-        #--- change for calling functions from imported "commander" module
-        getattr(commander, self.URL)()
+        #--- change for calling functions
+        self._w.event_generate('<<%s>>' % self.URL)
         #webbrowser.open(self.URL)
         #self._w.tag_config(self.tag_name, foreground="purple")
 

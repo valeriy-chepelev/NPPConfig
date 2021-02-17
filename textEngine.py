@@ -54,6 +54,7 @@ def split_unit_iid(unit_iid):
 def unit_text(unit):
     (aunit, parent, addr) = split_unit_iid(unit)
     if aunit is None:
+        # ----- no unit, just a slot -------
         data = ce.getPrjUnits(parent)
         slot = next(item for item in data['slots'] if item["addr"] == addr)
         s = '<h6>Место подключения</h6><div>Может быть установлен любой совместимый (суб-)модуль.</div>'
@@ -62,9 +63,18 @@ def unit_text(unit):
         s = s + '<li>позиция: %s</li></ul>' % addr
         return s
     data = ce.getPrjUnits(aunit)
-    s = '<div><a href="del_unit">Удалить "%s"</a> ' % data['name']
-    s = s + 'из устройства (будут удалены подключенные к нему субмодули).</div>'
-    s = '%s<h6>%s</h6><div>%s</div>' % (s, data['name'], data['desc'])
+    s = '<h6>%s</h6>' % data['name']
+    # ----- unit commands ---------
+    s = s + '<ul><li><a href="del_unit">Удалить</a> из устройства'
+    if subunits_count(data):
+        s = s + ' (подключенные (суб-)модули будут также удалены)'
+    s = s + '</li><li><a href="reset_unit">Сбросить настройки</a></li>'
+    if ce.get_can_move_up(aunit):
+        s = s + '<li><a href="move_up_unit">Переместить вверх</a></li>'
+    if ce.get_can_move_down(aunit):
+        s = s + '<li><a href="move_dn_unit">Переместить вниз</a></li>'
+    # ----- unit information --------
+    s = '</ul>%s<div>%s</div>' % (s, data['desc'])
     s = '%s<ul><li>тип: %s</li>' % (s, ce.getTerm(data['type']))
     s = '%s<li>редакция: %s</li>' % (s, data['edition'])
     s = '%s<li>версия: %s</li>' % (s, data['ver'])
@@ -88,13 +98,27 @@ def insert_text(unit, library):
     (aunit, parent, addr) = split_unit_iid(unit)
     lib_data = ce.getLibUnits(library)
     s = ''
-    if library in [item['id'] for item in ce.getLibUnits(unit = unit) if item['match']]:
+    # check installing a same item type
+    is_same = False
+    if aunit is not None:
+        aunit_data = ce.getPrjUnits(aunit)
+        is_same = aunit_data['lib'] == lib_data['id']
+    # check lib compatibility to slot
+    if not is_same and library in [item['id'] for item in ce.getLibUnits(unit = unit) if item['match']]:
         s = '<div><a href="ins_unit">Установить "%s"</a> ' % lib_data['name']
         s = s + 'на выбранное место.'
         if aunit is not None:
-            s = s + '<br><span style="color: red">Это действие заменит "%s"!</span>' % ce.getPrjUnits(aunit)['name']
+            s = s + '<br><span style="color: red">Это действие удалит "%s"!</span>' % aunit_data['name']
+            if subunits_count(aunit_data):
+                s = s + '<br>Установленные (суб-)модули будут по возможности переподключены.'
         s = s + '</div>'
     return s
+
+def subunits_count(data):
+    # ATTENTION: in list comp link to the slot type !!!
+    return len([ slot['addr'] for slot in data['slots']
+                 if slot['type'] == 'Bus' and slot['unit'] is not None])
+        
 
 #-------------------- the followed is imported from tkhtml----------------
 
@@ -170,7 +194,7 @@ class HTMLScrolledText(_ScrolledText):
         prev_state = self.cget('state')
         self.config(state=tk.NORMAL)
         self.delete('1.0', tk.END)
-        self.tag_delete(self.tag_names)
+        for tag in self.tag_names(): self.tag_delete(tag)
         self.html_parser.w_set_html(self, html, strip=strip)
         self.config(state=prev_state)
 
