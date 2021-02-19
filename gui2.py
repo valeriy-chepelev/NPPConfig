@@ -1,9 +1,10 @@
 from tkinter import *
 import tkinter.ttk as ttk
 from tkinter.scrolledtext import ScrolledText
-from verticalscrolledframe import VerticalScrolledFrame as VSFrame
+#from PIL import Image
 import clientEngine as ce
 from textEngine import get_sys_text, get_lib_text, HTMLScrolledText
+import resources
 
 def fixed_map(option):
     # Fix for setting text colour for Tkinter 8.6.9
@@ -59,6 +60,16 @@ class Application(Frame):
         top.rowconfigure(0, minsize=400, weight=1)
         top.columnconfigure(0, minsize=600, weight=1)
 
+        self.ico_lib = PhotoImage(data=resources.ICO_LIB)
+        self.ico_lib_ins = PhotoImage(data=resources.ICO_LIB_INS)
+        self.ico_mod = PhotoImage(data=resources.ICO_MOD)
+        self.ico_mod_ins = PhotoImage(data=resources.ICO_MOD_INS)
+        self.ico_mod_no = PhotoImage(data=resources.ICO_MOD_NO)
+        self.ico_mod_no_ins = PhotoImage(data=resources.ICO_MOD_NO_INS)
+        self.ico_red_bulb = PhotoImage(data=resources.ICO_RED)
+        self.ico_green_bulb = PhotoImage(data=resources.ICO_GREEN)
+        
+
         self.main_pane = PanedWindow(master = self,
                                      bd=2,
                                      orient=HORIZONTAL,
@@ -78,26 +89,30 @@ class Application(Frame):
         self.modules_tree.heading("#0",text="Модуль",anchor=W)
         self.modules_tree.heading("ed", text="Тип",anchor=W)
         self.modules_tree.bind("<<TreeviewSelect>>", self.on_module_select)
-        self.modules_tree.tag_configure('MATCH', background='cyan')
+        self.modules_tree.tag_configure('DEF', image=self.ico_mod)
+        self.modules_tree.tag_configure('EMPTY', image=self.ico_mod_no)
+        self.modules_tree.tag_configure('DMATCH', image=self.ico_mod_ins)
+        self.modules_tree.tag_configure('EMATCH', image=self.ico_mod_no_ins)
         
         self.lib_tree = ScrolledTree(master=self.lib_pane,
                                      show='tree headings',
                                      selectmode='browse')
         self.lib_tree["columns"]=('kind', 'type')
-        self.lib_tree.column("#0", width=150, minwidth=150)
+        self.lib_tree.column("#0", width=100, minwidth=100)
         self.lib_tree.column("kind", width=100, minwidth=70, stretch=NO)
         self.lib_tree.column("type", width=70, minwidth=70, stretch=NO)
-        self.lib_tree.heading("#0",text="Модуль",anchor=W)
+        self.lib_tree.heading("#0",text="",anchor=W)
         self.lib_tree.heading("kind", text="Вид",anchor=W)
         self.lib_tree.heading("type", text="Тип",anchor=W)
         self.lib_tree.bind("<<TreeviewSelect>>", self.on_lib_select)
-        self.lib_tree.tag_configure('MATCH', background='cyan')
+        self.lib_tree.tag_configure('DEF', image=self.ico_lib)
+        self.lib_tree.tag_configure('MATCH', image=self.ico_lib_ins)
          
         self.main_html = HTMLScrolledText(master = self.main_pane,
                                           relief='flat', bd = 2,
                                           padx=10, pady=2,
                                           state=DISABLED,
-                                          html = get_sys_text(None, None))
+                                          html = get_sys_text(None, None, None, None))
         self.main_html.bind('<<get_order>>', self.on_get_order)
         self.main_html.bind('<<req_info>>', self.on_req_info)
         self.main_html.bind('<<del_unit>>', self.on_del_unit)
@@ -114,7 +129,14 @@ class Application(Frame):
         
         self.top_frame = Frame(master=self,
                                relief='groove', bd = 2,
-                               padx=2, pady=2,)
+                               padx=2, pady=2)
+        self.stat_label = Button(master = self.top_frame,
+                                 image = self.ico_red_bulb,
+                                 relief = 'flat',
+                                 takefocus = 0,
+                                 command = self.on_req_info)
+        self.stat_label.pack(side = LEFT)
+                                 
 
         self.main_pane.add(self.modules_tree, minsize=200, width=200)
         self.main_pane.add(self.main_html, minsize=200)
@@ -130,52 +152,67 @@ class Application(Frame):
 
         self.fill_lib_tree(data = ce.getLibUnits())
         self.fill_modules_tree(data = ce.getPrjUnits())
-        self.makeStat()
+        self.update_stat()
+        
         
     def on_get_order(self, * args):
-        pass
+        print('This is order')
 
     def on_req_info(self, * args):
-        pass
+        print('This is stats info')
 
     def on_del_unit(self, * args):
         iid = self.modules_tree.focus()
-        ce.del_unit(iid.split('@')[0])
-        self.update_modules()
+        assert iid != ''
+        (parent, addr) = (next( tag for tag in self.modules_tree.item(iid, 'tags')
+                                if '@' in tag)).split('@')
+        ce.del_unit(self.modules_tree.focus())
+        self.update_modules(new_focus = parent + '|' + addr)
 
     def on_reset_unit(self, * args):
         pass
 
     def on_move_up_unit(self, * args):
-        iid = self.modules_tree.focus()
-        ce.move_up_unit(iid.split('@')[0])
+        ce.move_up_unit(self.modules_tree.focus())
         self.update_modules()
 
     def on_move_dn_unit(self, * args):
-        iid = self.modules_tree.focus()
-        ce.move_dn_unit(iid.split('@')[0])
+        ce.move_dn_unit(self.modules_tree.focus())
         self.update_modules()
 
     def on_ins_unit(self, * args):
         iid = self.modules_tree.focus()
         lib = self.lib_tree.focus()
-        ce.ins_new_unit(iid, lib)
-        self.update_modules()
+        assert iid != ''
+        (parent, addr) = (next( tag for tag in self.modules_tree.item(iid, 'tags')
+                                if '@' in tag)).split('@')
+        self.update_modules(new_focus = ce.ins_new_unit(parent, addr, lib)['unit'])
 
     def on_module_select(self, * args):
         lib = self.lib_tree.focus()
         if lib == '': lib = None
-        unit = self.modules_tree.focus()
-        if unit == '': unit = None
-        self.main_html.set_html(get_sys_text(unit, lib))
-        self.update_lib_tree(data = ce.getLibUnits(unit = unit))
+        iid = self.modules_tree.focus()
+        assert iid != ''
+        unit = None if ('|' in iid) else iid
+        (parent, addr) = (next( tag for tag in self.modules_tree.item(iid, 'tags')
+                                if '@' in tag)).split('@')
+        self.main_html.set_html(get_sys_text(unit, parent, addr, lib))
+        self.update_lib_tree(data = ce.getLibUnits(parent = parent, addr = addr))
         
     def on_lib_select(self, * args):
         lib = self.lib_tree.focus()
         if lib == '': lib = None
-        unit = self.modules_tree.focus()
-        if unit == '': unit = None
-        self.main_html.set_html(get_sys_text(unit, lib))
+        iid = self.modules_tree.focus()
+        if iid == '':
+            unit = None
+            parent = None
+            addr = None
+        else:
+            unit = None if ('|' in iid) else iid
+            (parent, addr) = (next( tag for tag in self.modules_tree.item(iid, 'tags')
+                                    if '@' in tag)).split('@')
+
+        self.main_html.set_html(get_sys_text(unit, parent, addr, lib))
         self.lib_html.set_html(get_lib_text(lib))
         self.update_modules_tree(data = ce.getPrjUnits(lib = lib, mode = 'short'))
 
@@ -187,34 +224,34 @@ class Application(Frame):
                                  iid = unit['id'],
                                  text = unit['name'],
                                  values = (ce.getTerm(unit['type']),unit['id']),
-                                 tags='MATCH' if unit['match'] else '')
+                                 tags = 'MATCH' if unit['match'] else 'DEF')
 
     def update_lib_tree(self, data):
         for unit in data:
             if unit['type']=='ROOT': continue
-            self.lib_tree.item(item = unit['id'], tags='MATCH' if unit['match'] else '')
+            self.lib_tree.item(item = unit['id'], tags='MATCH' if unit['match'] else 'DEF')
 
-    def makeStat(self):
+    def update_stat(self):
         data = ce.getStatus()
-        state_color = 'green' if data['Requirements'] and data['Resources'] else 'red'
-        Label( master = self.top_frame,
-               fg = state_color,
-               text = '\u2B24').pack(side = RIGHT)
+        if data['Requirements'] and data['Resources']:
+            self.stat_label.configure(image = self.ico_green_bulb, command = self.on_get_order)
+        else:
+            self.stat_label.configure(image = self.ico_red_bulb, command = self.on_req_info)
 
     def fill_modules_tree(self, data, parent='', prefix=''):
         if data['type']=='ROOT': pos = ''
         else: pos = self.modules_tree.insert(parent = parent,
                                              index = END,
-                                             iid = data['unit'] + '@' + data['parent'],
+                                             iid = data['unit'],
                                              text=prefix + data['name'],
                                              values=(data['lib']),
-                                             tags='MATCH' if data['match'] else '',
-                                             open='True')
+                                             tags = ('DMATCH', data['parent']) if data['match'] else ('DEF', data['parent']),
+                                             open=True)
         for slot in data['slots']:
             slot_pos = '' if slot['type']=='Exp' else pos
             if slot['unit'] is not None:
                 self.fill_modules_tree(parent = slot_pos,
-                                       data = slot['unit']|{'match':slot['match'], # indicates slot match for a selected library
+                                       data = slot['unit']|{'match':slot['match'],
                                                             'parent':data['unit'] + '@' + slot['addr']}, #parental unit/slot for future library match for selected unit 
                                                             
                                        prefix = '' if slot['type']=='ROOT' else slot['addr']+': ')
@@ -224,25 +261,43 @@ class Application(Frame):
                                          iid = data['unit'] + '|' + slot['addr'],
                                          text=('' if slot['type']=='ROOT' else slot['addr'] + ': ')+'---',
                                          values=(ce.getTerm(slot['type'])),
-                                         tags='MATCH' if slot['match'] else '')
+                                         tags = ('EMATCH', data['unit'] + '@' +
+                                                 slot['addr']) if slot['match'] else ('EMPTY', data['unit'] + '@' + slot['addr']))
 
     def update_modules_tree(self, data):
-        if data['type']!='ROOT': self.modules_tree.item(item = data['unit'] + '@' + data['parent'],
-                                                        tags = 'MATCH' if data['match'] else '')
+        if data['type']!='ROOT':
+            self.modules_tree.item(item = data['unit'],
+                                   tags = ('DMATCH', data['parent']) if data['match'] else ('DEF',data['parent']))
         for slot in data['slots']:
             if slot['unit'] is not None:
                 self.update_modules_tree(data = slot['unit']|{'match':slot['match'], # indicates slot match for a selected library
                                                               'parent':data['unit'] + '@' + slot['addr']}) #parental unit/slot for future library match for selected unit 
             else:
                 self.modules_tree.item(item = data['unit'] + '|' + slot['addr'],
-                                       tags = 'MATCH' if slot['match'] else '')
+                                       tags = ('EMATCH', data['unit'] + '@' + slot['addr']) if slot['match'] else ('EMPTY', data['unit'] + '@' + slot['addr']))
 
-    def update_modules(self):
+    def update_modules(self, new_focus = None):
         focused  = self.modules_tree.focus()
+        closed_stat = [iid for iid in self.modules_tree.get_children()
+                       if not self.modules_tree.item(iid,'open')]
+        
         self.modules_tree.delete(*self.modules_tree.get_children())
         self.fill_modules_tree(data = ce.getPrjUnits())
-        if self.modules_tree.exists(focused): self.modules_tree.focus(focused)
+        
+        for iid in closed_stat:
+            if self.modules_tree.exists(iid):
+                self.modules_tree.item(item=iid, open=False)
+        if new_focus is not None:
+            if self.modules_tree.exists(new_focus):
+                focused = new_focus
+            elif self.modules_tree.exists(new_focus.split('|')[0]):
+                focused = new_focus.split('|')[0]
+        if self.modules_tree.exists(focused):
+            self.modules_tree.see(focused)
+            self.modules_tree.focus(focused)
+            self.modules_tree.selection_set(focused)
         self.on_lib_select()
+        self.update_stat()
         
             
 app = Application()

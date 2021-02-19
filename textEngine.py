@@ -20,22 +20,21 @@ T_GOODCONF = '''<h6>Устройство сконфигурировано.</h6><
 T_INS_TIP = '''<div style="text-align: center">Чтобы добавить модуль из библиотеки в устройство,<br>
 выберите модуль в библиотеке \u261B <br>
 \u261A и выберите место для его установки в устройство.<br>
-Совместимые позиции <span style="background-color: cyan">
-выделяются цветом</span>.</div>'''
+Совместимые позиции выделяются метками "<span style="color: green">\u25C0 \u25C0</span>".</div>'''
         
 
-def get_sys_text(unit, library):
+def get_sys_text(unit, parent, addr, library):
     s = T_H_HWCONF
     # if no selection - base selection tip
-    if unit is None and library is None: s = s + T_SEL_TIP
+    if parent is None and library is None: s = s + T_SEL_TIP
     # if both selected: commands
-    if unit is not None and library is not None:
-        s = s + insert_text(unit, library)
+    if parent is not None and library is not None:
+        s = s + insert_text(unit, parent, addr, library)
     # if only one selected - show tip
-    elif unit is not None or library is not None:
+    elif parent is not None or library is not None:
         s = s + T_INS_TIP
     # text for unit, if selected
-    if unit is not None: s = s + unit_text(unit)
+    if parent is not None: s = s + unit_text(unit, parent, addr)
     # finalize - status info       
     stat = ce.getStatus()
     s = s + (T_GOODCONF if stat['Resources'] and stat['Requirements'] else T_BADCONF)
@@ -44,16 +43,8 @@ def get_sys_text(unit, library):
 def get_lib_text(library):
     return T_SEL_LIB_TIP if library is None else lib_text(library)
 
-def split_unit_iid(unit_iid):
-    if '|' in unit_iid:
-        u_spl = unit_iid.split('|')
-        return None, u_spl[0], u_spl[1]
-    u_spl = unit_iid.split('@')
-    return u_spl[0], u_spl[1], u_spl[2]
-
-def unit_text(unit):
-    (aunit, parent, addr) = split_unit_iid(unit)
-    if aunit is None:
+def unit_text(unit, parent, addr):
+    if unit is None:
         # ----- no unit, just a slot -------
         data = ce.getPrjUnits(parent)
         slot = next(item for item in data['slots'] if item["addr"] == addr)
@@ -62,16 +53,16 @@ def unit_text(unit):
         s = s + '<li>тип соединения: %s</li>' % ce.getTerm(slot['type'])
         s = s + '<li>позиция: %s</li></ul>' % addr
         return s
-    data = ce.getPrjUnits(aunit)
+    data = ce.getPrjUnits(unit)
     s = '<h6>%s</h6>' % data['name']
     # ----- unit commands ---------
     s = s + '<ul><li><a href="del_unit">Удалить</a> из устройства'
     if subunits_count(data):
-        s = s + ' (подключенные (суб-)модули будут также удалены)'
+        s = s + '<span style="color: red"> (подключенные (суб-)модули будут также удалены)</span>'
     s = s + '</li><li><a href="reset_unit">Сбросить настройки</a></li>'
-    if ce.get_can_move_up(aunit):
+    if ce.get_can_move_up(unit):
         s = s + '<li><a href="move_up_unit">Переместить вверх</a></li>'
-    if ce.get_can_move_down(aunit):
+    if ce.get_can_move_down(unit):
         s = s + '<li><a href="move_dn_unit">Переместить вниз</a></li>'
     # ----- unit information --------
     s = '</ul>%s<div>%s</div>' % (s, data['desc'])
@@ -94,22 +85,21 @@ def lib_text(library):
     s = s + ('</ul>' if prop=='' else '<li>свойства: %s</li></ul>' % prop)
     return s
 
-def insert_text(unit, library):
-    (aunit, parent, addr) = split_unit_iid(unit)
-    lib_data = ce.getLibUnits(library)
+def insert_text(unit, parent, addr, library):
+    lib_data = ce.getLibUnits(library, parent, addr)
     s = ''
     # check installing a same item type
     is_same = False
-    if aunit is not None:
-        aunit_data = ce.getPrjUnits(aunit)
-        is_same = aunit_data['lib'] == lib_data['id']
+    if unit is not None:
+        unit_data = ce.getPrjUnits(unit)
+        is_same = unit_data['lib'] == lib_data['id']
     # check lib compatibility to slot
-    if not is_same and library in [item['id'] for item in ce.getLibUnits(unit = unit) if item['match']]:
+    if (not is_same) and lib_data['match']:
         s = '<div><a href="ins_unit">Установить "%s"</a> ' % lib_data['name']
         s = s + 'на выбранное место.'
-        if aunit is not None:
-            s = s + '<br><span style="color: red">Это действие удалит "%s"!</span>' % aunit_data['name']
-            if subunits_count(aunit_data):
+        if unit is not None:
+            s = s + '<br><span style="color: red">Это действие удалит "%s"!</span>' % unit_data['name']
+            if subunits_count(unit_data):
                 s = s + '<br>Установленные (суб-)модули будут по возможности переподключены.'
         s = s + '</div>'
     return s
@@ -197,6 +187,7 @@ class HTMLScrolledText(_ScrolledText):
         for tag in self.tag_names(): self.tag_delete(tag)
         self.html_parser.w_set_html(self, html, strip=strip)
         self.config(state=prev_state)
+        self.config(cursor="")
 
 
 class HTMLText(HTMLScrolledText):

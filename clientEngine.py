@@ -11,20 +11,12 @@ def getTerm(term):
     if r.status_code == 200: return r.json()
     return term
 
-def getLibUnits(lib='', unit=''):
+def getLibUnits(lib='', parent='', addr=''):
     payload = dict()
     if lib != '':
         payload.update({'id' : lib})
-    if unit != '':
-        if '|' in unit:
-            spl_unit = unit.split('|')
-            unitId = spl_unit[0]
-            addr = spl_unit[1]
-        if '@' in unit:
-            spl_unit = unit.split('@')
-            unitId = spl_unit[1]
-            addr = spl_unit[2]
-        payload.update({'unit' : unitId, 'addr' : addr})
+    if parent != '':
+        payload.update({'unit' : parent, 'addr' : addr})
         
     r = RQ.get(_url('hwlib/units'), data=payload)
     if r.status_code == 200: return r.json()
@@ -78,15 +70,14 @@ def move_dn_unit(unit):
     if r.status_code != 201:
         raise AssertionError('Server error ' + str(r.status_code))
 
-def ins_new_unit(unit, lib):
-    if '|' in unit: (uid, addr) = unit.split('|')
-    else: (foo, uid, addr) = unit.split('@')
-    payload = {'unit' : uid,
+def ins_new_unit(parent, addr, lib):
+    payload = {'unit' : parent,
                'addr' : addr,
                'id' : lib}
     r = RQ.post(_url('cfg/units'), data=payload)
     if r.status_code != 201:
         raise AssertionError('Server error ' + str(r.status_code))
+    return r.json()
 
     
 def main():
