@@ -79,6 +79,14 @@ def ins_new_unit(parent, addr, lib):
         raise AssertionError('Server error ' + str(r.status_code))
     return r.json()
 
+def set_unit_alias(unit, alias):
+    payload = {'unit' : unit,
+               'alias' : alias}
+    r = RQ.put(_url('cfg/units'), data=payload)
+    if r.status_code != 201:
+        raise AssertionError('Server error ' + str(r.status_code))
+    
+
     
 def main():
     print (getTerm('Power'))

@@ -55,6 +55,7 @@ def unit_text(unit, parent, addr):
         return s
     data = ce.getPrjUnits(unit)
     s = '<h6>%s</h6>' % data['name']
+    s = s + 'Имя: <ent href="alias" src="%s"><br>' % (data['alias'] if data['alias'] != '' else data['name'])
     # ----- unit commands ---------
     s = s + '<ul><li><a href="del_unit">Удалить</a> из устройства'
     if subunits_count(data):
@@ -65,7 +66,7 @@ def unit_text(unit, parent, addr):
     if ce.get_can_move_down(unit):
         s = s + '<li><a href="move_dn_unit">Переместить вниз</a></li>'
     # ----- unit information --------
-    s = '</ul>%s<div>%s</div>' % (s, data['desc'])
+    s = '%s</ul><div>%s</div>' % (s, data['desc'])
     s = '%s<ul><li>тип: %s</li>' % (s, ce.getTerm(data['type']))
     s = '%s<li>редакция: %s</li>' % (s, data['edition'])
     s = '%s<li>версия: %s</li>' % (s, data['ver'])
@@ -98,7 +99,7 @@ def insert_text(unit, parent, addr, library):
         s = '<div><a href="ins_unit">Установить "%s"</a> ' % lib_data['name']
         s = s + 'на выбранное место.'
         if unit is not None:
-            s = s + '<br><span style="color: red">Это действие удалит "%s"!</span>' % unit_data['name']
+            s = s + '<br><span style="color: red">Это действие удалит "%s"!</span>' % (unit_data['alias'] if unit_data['alias'] != '' else unit_data['name'])
             if subunits_count(unit_data):
                 s = s + '<br>Установленные (суб-)модули будут по возможности переподключены.'
         s = s + '</div>'
@@ -121,6 +122,7 @@ class _ScrolledText(tk.Text):
         kw.update({'yscrollcommand': self.vbar.set})
         self.vbar.pack(side=tk.RIGHT, fill=tk.Y)
         self.vbar['command'] = self.yview
+        self.entry_text = ''
 
         tk.Text.__init__(self, self.frame, **kw)
         self.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)

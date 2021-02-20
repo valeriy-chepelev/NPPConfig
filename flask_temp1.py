@@ -45,6 +45,7 @@ parser.add_argument('addr')
 parser.add_argument('unit', type=uid)
 parser.add_argument('mode')
 parser.add_argument('cmd')
+parser.add_argument('alias')
 
 # Library resources
 
@@ -172,9 +173,12 @@ class Unit(Resource):
                 if CFG.move_unit(unit, move_dir_up, dry_run = False):
                     return CFG.getUnit(unit, None), 201
                 else: return 'Unable to move', 400
-        if unit is None or args['newtag'] is None:
-            return 'Bad request', 400
-        return CFG.setUnitTag(unit, args['newtag']), 201
+        if unit is not None and args['newtag'] is not None:
+            return CFG.setUnitTag(unit, args['newtag']), 201
+        if unit is not None and args['alias'] is not None:
+            CFG.setUnitAlias(unit, args['alias'])
+            return CFG.getUnit(unit, None), 201
+        return 'Bad request', 400
         
     @libErrHandler
     def post(self):

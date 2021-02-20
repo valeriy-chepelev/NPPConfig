@@ -19,7 +19,8 @@ def newConfig():
     sysroot.attrib.update({'id' : ROOT_ID,
                            'lib' : 'ROOT-1-0',
                            'addr' : '',
-                           'tag' : 'ROOT'})
+                           'tag' : 'ROOT',
+                           'alias' :''})
     
 
 def loadConfig(path, filename):
@@ -249,13 +250,16 @@ def _dumpSlots(unit, match, recurse, mode):
 def _dumpUnit(unit, match, recurse, mode):
     values = {'unit' : unit.get('id'),
               'lib' : unit.get('lib'),
+              'alias' : unit.get('alias'),
               'slots' : _dumpSlots(unit, match, recurse, mode)}
     if mode:
         values.update(HWL.getUnit(unit.get('lib')))
         values.pop('id')
     else:
-        values['type'] = HWL.getUnit(unit.get('lib')).get('type')
-    values['tag'] = unit.get('tag')
+        lib = HWL.getUnit(unit.get('lib'))
+        values['type'] = lib.get('type')
+        values['name'] = lib.get('name')
+    values['tag'] = unit.get('tag') # at end - to override HWL's tag
     return values
 
 def listUnits(matchlib, mode = DUMP_SHORT):
@@ -271,6 +275,10 @@ def setUnitTag(unitId, tag:str = ''):
     s = MU.normalTag(tag)
     hwConfig.find('.//npp:Unit[@id="%s"]' % unitId, ns).set('tag', s)
     return s
+
+def setUnitAlias(unitId, alias:str = ''):
+    if unitId == ROOT_ID: raise AssertionError()
+    hwConfig.find('.//npp:Unit[@id="%s"]' % unitId, ns).set('alias', alias)
 
 def idByTag(tag):
     return hwConfig.find('.//npp:Unit[@tag="%s"]' % MU.normalTag(tag), ns).get('id')
@@ -292,9 +300,11 @@ def addUnit(libId, unitId, addr):
     new_unit.attrib.update({'id' : str(uid()),
                             'lib' : libId,
                             'addr' : addr,
-                            'tag' : ''})
+                            'tag' : '',
+                            'alias' : ''})
     #Move old unit childs, if present
     if old_unit is not None:
+        new_unit.set('alias',old_unit.get('alias'))
         for child in old_unit.findall('./npp:Unit', ns):
             child_conn = get_conn(child)
             # check slot with the same addr

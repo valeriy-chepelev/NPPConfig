@@ -137,3 +137,9 @@ Moves described config unit up or down in a configuration hierarhy.
 Return 201 and unit data structure after sucess move
 Return 400 if unit can't be moved in that direction
 Return 404 if unit not found
+
+PUT /cfg/units?[unit=<UUID> | tag=boo]&alias=alias_value
+Writes unit alias
+Return 200 and unit data structure
+Return 404 if unit not found
+

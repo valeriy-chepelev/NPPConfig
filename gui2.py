@@ -5,6 +5,7 @@ from tkinter.scrolledtext import ScrolledText
 import clientEngine as ce
 from textEngine import get_sys_text, get_lib_text, HTMLScrolledText
 import resources
+from string import punctuation
 
 def fixed_map(option):
     # Fix for setting text colour for Tkinter 8.6.9
@@ -97,12 +98,10 @@ class Application(Frame):
         self.lib_tree = ScrolledTree(master=self.lib_pane,
                                      show='tree headings',
                                      selectmode='browse')
-        self.lib_tree["columns"]=('kind', 'type')
+        self.lib_tree["columns"]=('type')
         self.lib_tree.column("#0", width=100, minwidth=100)
-        self.lib_tree.column("kind", width=100, minwidth=70, stretch=NO)
         self.lib_tree.column("type", width=70, minwidth=70, stretch=NO)
-        self.lib_tree.heading("#0",text="",anchor=W)
-        self.lib_tree.heading("kind", text="Вид",anchor=W)
+        self.lib_tree.heading("#0",text="Модуль",anchor=W)
         self.lib_tree.heading("type", text="Тип",anchor=W)
         self.lib_tree.bind("<<TreeviewSelect>>", self.on_lib_select)
         self.lib_tree.tag_configure('DEF', image=self.ico_lib)
@@ -120,6 +119,7 @@ class Application(Frame):
         self.main_html.bind('<<move_up_unit>>', self.on_move_up_unit)
         self.main_html.bind('<<move_dn_unit>>', self.on_move_dn_unit)
         self.main_html.bind('<<ins_unit>>', self.on_ins_unit)
+        self.main_html.bind('<<alias>>', self.on_alias)
 
         self.lib_html = HTMLScrolledText(master = self.lib_pane,
                                          relief='flat', bd = 2,
@@ -170,7 +170,21 @@ class Application(Frame):
         self.update_modules(new_focus = parent + '|' + addr)
 
     def on_reset_unit(self, * args):
-        pass
+        ce.set_unit_alias(self.modules_tree.focus(), '')
+        self.update_modules()
+
+    def on_alias(self, * args):
+        iid = self.modules_tree.focus()
+        assert iid != ''
+        name = self.modules_tree.item(iid,'text')
+        if ': ' in name:
+            name = name.split(': ')[-1]
+        value = self.main_html.entry_text
+        new_alias = (''.join(e for e in value if not e in punctuation)).strip()
+        if new_alias != name:
+            ce.set_unit_alias(iid, new_alias)
+            self.update_modules()
+            
 
     def on_move_up_unit(self, * args):
         ce.move_up_unit(self.modules_tree.focus())
@@ -212,10 +226,10 @@ class Application(Frame):
             (parent, addr) = (next( tag for tag in self.modules_tree.item(iid, 'tags')
                                     if '@' in tag)).split('@')
 
-        self.main_html.set_html(get_sys_text(unit, parent, addr, lib))
         self.lib_html.set_html(get_lib_text(lib))
         self.update_modules_tree(data = ce.getPrjUnits(lib = lib, mode = 'short'))
-
+        self.main_html.set_html(get_sys_text(unit, parent, addr, lib))
+        
     def fill_lib_tree(self, data):
         for unit in data:
             if unit['type']=='ROOT': continue
@@ -223,7 +237,7 @@ class Application(Frame):
                                  index = END,
                                  iid = unit['id'],
                                  text = unit['name'],
-                                 values = (ce.getTerm(unit['type']),unit['id']),
+                                 values = (unit['id']),
                                  tags = 'MATCH' if unit['match'] else 'DEF')
 
     def update_lib_tree(self, data):
@@ -243,7 +257,7 @@ class Application(Frame):
         else: pos = self.modules_tree.insert(parent = parent,
                                              index = END,
                                              iid = data['unit'],
-                                             text=prefix + data['name'],
+                                             text=prefix + (data['alias'] if data['alias'] != '' else data['name']),
                                              values=(data['lib']),
                                              tags = ('DMATCH', data['parent']) if data['match'] else ('DEF', data['parent']),
                                              open=True)

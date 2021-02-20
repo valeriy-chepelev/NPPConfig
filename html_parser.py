@@ -10,7 +10,8 @@ from copy import deepcopy
 from html.parser import HTMLParser
 from collections import OrderedDict
 import requests
-from io import BytesIO
+#from io import BytesIO
+import resources
 
 #__________________________________________________________________________________________________
 class Defs():
@@ -38,6 +39,7 @@ class HTML:
         OL = 'ol'
         LI = 'li'
         IMG = 'img'
+        ENT = 'ent'
         A = 'a'
         B = 'b'
         STRONG = 'strong'
@@ -491,7 +493,33 @@ class HTMLTextParser(HTMLParser):
                     self._stack_pop(tag, Fnt.UNDERLINE)
                     self._stack_pop(tag, Fnt.OVERSTRIKE)
 
-        #-- images codeblock deleted
+        elif tag == HTML.Tag.IMG and attrs[HTML.Attrs.SRC]:
+            #-------------------------------------------------------------------- [ UNSTYLED_TAGS ]
+            image = None
+            #print(attrs[HTML.Attrs.SRC] , self.cached_images)
+            #check image src in resources
+            if attrs[HTML.Attrs.SRC] in dir(resources):
+                image = tk.PhotoImage(data = getattr(resources, attrs[HTML.Attrs.SRC]))
+            if image:
+                self.images.append(image)
+                self._w.image_create(tk.INSERT, image=self.images[-1]) 
+            #-- images codeblock
+
+        elif tag == HTML.Tag.ENT and attrs[HTML.Attrs.SRC] and attrs[HTML.Attrs.HREF]:
+            entry = tk.Entry(self._w, width = 10 + max(20, len(attrs[HTML.Attrs.SRC])))
+            entry.insert(0, attrs[HTML.Attrs.SRC])
+            def handler(event, self=self, name=attrs[HTML.Attrs.HREF], source = self._w):
+                source.entry_text = event.widget.get()
+                source.event_generate('<<%s>>' % name)
+                return
+            def esc_handler(event, self=self, default=attrs[HTML.Attrs.SRC]):
+                event.widget.delete(0, 'end')
+                event.widget.insert(0, default)
+                return
+            entry.bind('<Return>', handler)
+            entry.bind('<Escape>', esc_handler)
+            self.entries.append(entry)
+            self._w.window_create(tk.INSERT, window = entry)
         
         if self.strip:
             #------------------------------------------------------------------------ [ NEW_LINES ]
@@ -512,7 +540,6 @@ class HTMLTextParser(HTMLParser):
                     self._insert_new_line(double=True)
 
         self._w_tags_add()
-
 
     def handle_charref(self, data):
         #------------------------------------------------------------------------------------------
@@ -664,6 +691,7 @@ class HTMLTextParser(HTMLParser):
         self._w_tags = OrderedDict()
         self.html_tags = []
         self.images = []
+        self.entries = []
         self.list_tags = []
         self.strip = strip
         self._w_tags_add()

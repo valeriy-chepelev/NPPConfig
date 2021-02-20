@@ -1,16 +1,16 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <HWConfig xmlns="http://www.mtrele.ru/npp/2021">
-	<Unit id="00000000-0000-4000-8000-000000000000" lib="ROOT-1-0" addr="" tag="ROOT">
-		<Unit id="ac27fc8b-9186-49aa-a390-0bc9c3df7999" lib="B1-1-0" addr="ROOT" tag="">
-			<Unit id="89c61247-bf9f-46c7-9d77-ad09d3590614" lib="X1-1-0" addr="0" tag="">
-				<Unit id="55bdc1a9-e880-497f-8128-0ce8d443ca9b" lib="DI12-1-0" addr="1" tag=""/>
-				<Unit id="0b4087ce-318a-4bd8-ae91-49c47d33214e" lib="DI12-1-0" addr="2" tag="todel"/>
-				<Unit id="1fe57d04-2a84-4cda-80a5-3f581bc6bcf2" lib="X1-1-0" addr="0" tag="sss">
-					<Unit id="02f89c37-15a5-4d8a-8f27-62be45ae49a9" lib="DI12-1-0" addr="1" tag=""/>
-					<Unit id="24e779e4-6c5d-4b5d-be85-f5c3bd5fd39b" lib="DI12-1-0" addr="2" tag=""/>
+	<Unit id="00000000-0000-4000-8000-000000000000" lib="ROOT-1-0" addr="" tag="ROOT" alias="">
+		<Unit id="ac27fc8b-9186-49aa-a390-0bc9c3df7999" lib="B1-1-0" addr="ROOT" tag="" alias="">
+			<Unit id="89c61247-bf9f-46c7-9d77-ad09d3590614" lib="X1-1-0" addr="0" tag="" alias="">
+				<Unit id="55bdc1a9-e880-497f-8128-0ce8d443ca9b" lib="DI12-1-0" addr="1" tag="" alias=""/>
+				<Unit id="0b4087ce-318a-4bd8-ae91-49c47d33214e" lib="DI12-1-0" addr="2" tag="todel" alias=""/>
+				<Unit id="1fe57d04-2a84-4cda-80a5-3f581bc6bcf2" lib="X1-1-0" addr="0" tag="sss" alias="">
+					<Unit id="02f89c37-15a5-4d8a-8f27-62be45ae49a9" lib="DI12-1-0" addr="1" tag="" alias=""/>
+					<Unit id="24e779e4-6c5d-4b5d-be85-f5c3bd5fd39b" lib="DI12-1-0" addr="2" tag="" alias=""/>
 				</Unit>
 			</Unit>
-			<Unit id="f0e70876-9c29-4ac0-9fa9-09bd808183e2" lib="MPC1-1-0" addr="2" tag=""/>
+			<Unit id="f0e70876-9c29-4ac0-9fa9-09bd808183e2" lib="MPC1-1-0" addr="2" tag="" alias=""/>
 		</Unit>
 	</Unit>
 </HWConfig>
