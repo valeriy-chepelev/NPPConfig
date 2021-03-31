@@ -75,7 +75,8 @@
 		Модуль устанавливается только в слот базового корпуса.
 		</Description>
 		<Property name="Power"/>
-		<Model/>
+		<Model id="ZBAT"/>
+		<Model id="LTRK_Power_01"/>
 	</Unit>
 	
 	<Unit type="Module" edition="DI12" ver="1" rev="0">
@@ -90,7 +91,8 @@
 		Обеспечивается импульс тока режекции.
 		</Description>
 		<Property name="DI"/>
-		<Model id="GGIO_NPP_01"/>
+		<Model id="GGIO_DI12_01"/>
+		<Model id="LTRK_DI_01"/>
 	</Unit>
 
 </ModuleDescription>

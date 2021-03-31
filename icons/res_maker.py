@@ -1,7 +1,7 @@
 from PIL import Image
 import base64 as b64
 
-im = Image.open('greenbulb.ico')
+im = Image.open('aa_del.ico')
 
 #xsize, ysize = im.size
 #part = im.crop((4,0,xsize, ysize))

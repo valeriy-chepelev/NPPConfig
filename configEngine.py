@@ -38,17 +38,17 @@ def saveConfig(path, filename):
 
 def _calcProp(name):
     val = 0
-    for unit in hwConfig.findall('.//npp:Unit', ns):
+    for unit in hwConfig.findall('.//emt:Unit', ns):
         val += len (HWL.hwLibrary.findall(
-            './npp:Unit[@id="%s"]/npp:Property[@name="%s"]' % (unit.get('lib'), name), ns))
+            './emt:Unit[@id="%s"]/emt:Property[@name="%s"]' % (unit.get('lib'), name), ns))
     return val
 
 def listReqs():
     reqlist = list()
-    for unit in hwConfig.findall('.//npp:Unit', ns):
+    for unit in hwConfig.findall('.//emt:Unit', ns):
         libId = unit.get('lib')
         for r in HWL.hwLibrary.findall(
-            './npp:Unit[@id="%s"]/npp:Required' % libId, ns):
+            './emt:Unit[@id="%s"]/emt:Required' % libId, ns):
             reqlist.append({
                 'unit' : unit.get('id'),
                 'property' : r.get('property'),
@@ -60,25 +60,25 @@ def listReqs():
 def _calcRes(name):
     used = 0
     avail = 0
-    for unit in hwConfig.findall('.//npp:Unit', ns):
+    for unit in hwConfig.findall('.//emt:Unit', ns):
         libId = unit.get('lib')
         used += sum( int (r.get('val'))
                      for r in HWL.hwLibrary.findall(
-                         './npp:Unit[@id="%s"]/npp:Uses[@resource="%s"]' % (libId, name), ns))
+                         './emt:Unit[@id="%s"]/emt:Uses[@resource="%s"]' % (libId, name), ns))
         avail += sum( int (r.get('val'))
                      for r in HWL.hwLibrary.findall(
-                         './npp:Unit[@id="%s"]/npp:Resource[@name="%s"]' % (libId, name), ns))
+                         './emt:Unit[@id="%s"]/emt:Resource[@name="%s"]' % (libId, name), ns))
     return name, used, avail
     
 def listResources():
     reslist = set()
-    for unit in hwConfig.findall('.//npp:Unit', ns):
+    for unit in hwConfig.findall('.//emt:Unit', ns):
         libId = unit.get('lib')
         for r in HWL.hwLibrary.findall(
-            './npp:Unit[@id="%s"]/npp:Resource' % libId, ns):
+            './emt:Unit[@id="%s"]/emt:Resource' % libId, ns):
             reslist.add(r.get('name'))
         for r in HWL.hwLibrary.findall(
-            './npp:Unit[@id="%s"]/npp:Uses' % libId, ns):
+            './emt:Unit[@id="%s"]/emt:Uses' % libId, ns):
             reslist.add(r.get('resource'))
     return [dict(zip(('resource', 'used', 'available'),
                      _calcRes(r)))
@@ -96,26 +96,26 @@ def getStatus():
 # aiming units
 
 def get_slot(unitId, addr):
-    unit = hwConfig.find('.//npp:Unit[@id="%s"]' % unitId, ns)
-    return HWL.hwLibrary.find('./npp:Unit[@id="%s"]/npp:Slot[@addr="%s"]' %
+    unit = hwConfig.find('.//emt:Unit[@id="%s"]' % unitId, ns)
+    return HWL.hwLibrary.find('./emt:Unit[@id="%s"]/emt:Slot[@addr="%s"]' %
                               (unit.get('lib'), addr) , ns)
 
 def get_ch_slot(unit):
-    return HWL.hwLibrary.find('./npp:Unit[@id="%s"]/npp:Slot[@chain="1"]' %
+    return HWL.hwLibrary.find('./emt:Unit[@id="%s"]/emt:Slot[@chain="1"]' %
                               unit.get('lib'), ns)
 
 def get_conn(unit):
-    return HWL.hwLibrary.find('./npp:Unit[@id="%s"]/npp:Connect' %
+    return HWL.hwLibrary.find('./emt:Unit[@id="%s"]/emt:Connect' %
                               unit.get('lib'), ns)
 
 
 def canConnectUnit(libId, unitId, addr):
     # check is library unit can be connected to a selected slot
-    connector = HWL.hwLibrary.find('./npp:Unit[@id="%s"]/npp:Connect' % libId, ns)
-    unit = hwConfig.find('.//npp:Unit[@id="%s"]' % unitId, ns)
-    slot = HWL.hwLibrary.find('./npp:Unit[@id="%s"]/npp:Slot[@addr="%s"]' %
+    connector = HWL.hwLibrary.find('./emt:Unit[@id="%s"]/emt:Connect' % libId, ns)
+    unit = hwConfig.find('.//emt:Unit[@id="%s"]' % unitId, ns)
+    slot = HWL.hwLibrary.find('./emt:Unit[@id="%s"]/emt:Slot[@addr="%s"]' %
                               (unit.get('lib'), addr) , ns)
-    connected = unit.find('./npp:Unit[@addr="%s"]' % addr, ns)
+    connected = unit.find('./emt:Unit[@addr="%s"]' % addr, ns)
     return connected is None and MU.is_compatible(conn = connector, slot = slot)
 
 def move_unit(unit_id, dir_up = False, dry_run = False):
@@ -130,7 +130,7 @@ def move_unit(unit_id, dir_up = False, dry_run = False):
     def _swap_bus_slots(slot_list, owner):
         nonlocal my_unit, my_connector, my_slot, dir_up, dry_run
         for slot in slot_list:
-            replacer = owner.find('./npp:Unit[@addr="%s"]' % slot.get('addr'), ns)
+            replacer = owner.find('./emt:Unit[@addr="%s"]' % slot.get('addr'), ns)
             if MU.is_compatible(conn = my_connector, slot = slot):
                 if replacer is None and not owner is my_unit:
                     # reinstall to new free place, return true
@@ -140,7 +140,7 @@ def move_unit(unit_id, dir_up = False, dry_run = False):
                         my_unit.set('addr', slot.get('addr'))
                     return True
                 elif replacer is not None and not replacer is my_unit:
-                    rep_connector = HWL.hwLibrary.find('./npp:Unit[@id="%s"]/npp:Connect' %
+                    rep_connector = HWL.hwLibrary.find('./emt:Unit[@id="%s"]/emt:Connect' %
                                                        replacer.get('lib'), ns)
                     if MU.is_compatible(conn = rep_connector, slot = my_slot):
                         # swap units, return true
@@ -153,7 +153,7 @@ def move_unit(unit_id, dir_up = False, dry_run = False):
                         return True
             elif replacer is not None:
                 #recursevly check inner units according to direction
-                inner_slot_list = HWL.hwLibrary.findall('./npp:Unit[@id="%s"]/npp:Slot' %
+                inner_slot_list = HWL.hwLibrary.findall('./emt:Unit[@id="%s"]/emt:Slot' %
                                                         replacer.get('lib'), ns)
                 if dir_up: inner_slot_list.reverse()
                 if _swap_bus_slots(inner_slot_list, replacer): return True
@@ -174,16 +174,16 @@ def move_unit(unit_id, dir_up = False, dry_run = False):
             owner.append(swap2)
             swap2.set('addr', swap1.get('addr'))
             swap2.append(swap1)
-            slot = HWL.hwLibrary.find('./npp:Unit[@id="%s"]/npp:Slot[@chain="1"]' %
+            slot = HWL.hwLibrary.find('./emt:Unit[@id="%s"]/emt:Slot[@chain="1"]' %
                                       swap2.get('lib'), ns)
             swap1.set('addr', slot.get('addr'))
         return True
     
     # take my.connector and my.parent_slot
-    my_unit = hwConfig.find('.//npp:Unit[@id="%s"]' % unit_id, ns)
-    my_connector = HWL.hwLibrary.find('./npp:Unit[@id="%s"]/npp:Connect' %
+    my_unit = hwConfig.find('.//emt:Unit[@id="%s"]' % unit_id, ns)
+    my_connector = HWL.hwLibrary.find('./emt:Unit[@id="%s"]/emt:Connect' %
                                       my_unit.get('lib'), ns)
-    my_slot = HWL.hwLibrary.find('./npp:Unit[@id="%s"]/npp:Slot[@addr="%s"]' %
+    my_slot = HWL.hwLibrary.find('./emt:Unit[@id="%s"]/emt:Slot[@addr="%s"]' %
                               (my_unit.getparent().get('lib'), my_unit.get('addr')) , ns)
     # route for chain connections
     if my_slot.get('chain'):
@@ -192,20 +192,20 @@ def move_unit(unit_id, dir_up = False, dry_run = False):
             owner = replacer.getparent()
             child_slot = get_ch_slot(my_unit)
             child = None if child_slot is None else my_unit.find(
-                './npp:Unit[@addr="%s"]' % child_slot.get('addr'), ns)
+                './emt:Unit[@addr="%s"]' % child_slot.get('addr'), ns)
             if _swap_chain_slots(owner, replacer, my_unit, child):
                 return True
         else: # direction = down
             owner = my_unit.getparent()
             replacer_slot = get_ch_slot(my_unit)
             replacer = None if replacer_slot is None else my_unit.find(
-                './npp:Unit[@addr="%s"]' % replacer_slot.get('addr'), ns)
+                './emt:Unit[@addr="%s"]' % replacer_slot.get('addr'), ns)
             #print('owner %s' % owner.get('id'))
             #print('replacer %s' % replacer.get('id'))
             if replacer is None: return False
             child_slot = get_ch_slot(replacer)
             child = None if child_slot is None else replacer.find(
-                './npp:Unit[@addr="%s"]' % child_slot.get('addr'), ns)
+                './emt:Unit[@addr="%s"]' % child_slot.get('addr'), ns)
             if _swap_chain_slots(owner, my_unit, replacer, child):
                 return True
         return False
@@ -214,7 +214,7 @@ def move_unit(unit_id, dir_up = False, dry_run = False):
     target_parent = my_unit.getparent()
     child = my_unit
     while target_parent.get('id') != ROOT_ID:
-        slot_list = HWL.hwLibrary.findall('./npp:Unit[@id="%s"]/npp:Slot' %
+        slot_list = HWL.hwLibrary.findall('./emt:Unit[@id="%s"]/emt:Slot' %
                                           target_parent.get('lib'), ns)
         child_pos = next(i for i, slot in enumerate(slot_list)
                          if slot.get('addr') == child.get('addr'))
@@ -237,7 +237,7 @@ DUMP_ALL = True
 def _dumpSlots(unit, match, recurse, mode):
     
     def subdata(unit, match, slot, recurse, mode):
-        subunit = unit.find('./npp:Unit[@addr="%s"]' % slot.get('addr'), ns)
+        subunit = unit.find('./emt:Unit[@addr="%s"]' % slot.get('addr'), ns)
         if subunit is None: return None
         return _dumpUnit(subunit, match, recurse, mode) if recurse else subunit.get('id')
         
@@ -245,7 +245,7 @@ def _dumpSlots(unit, match, recurse, mode):
               'type' : slot.get('type'),
               'match' : match is not None and MU.is_compatible(conn = match, slot = slot),
               'unit' : subdata(unit, match, slot, recurse, mode)}
-        for slot in HWL.hwLibrary.findall('./npp:Unit[@id="%s"]/npp:Slot' % unit.get('lib'), ns)]
+        for slot in HWL.hwLibrary.findall('./emt:Unit[@id="%s"]/emt:Slot' % unit.get('lib'), ns)]
 
 def _dumpUnit(unit, match, recurse, mode):
     values = {'unit' : unit.get('id'),
@@ -263,38 +263,38 @@ def _dumpUnit(unit, match, recurse, mode):
     return values
 
 def listUnits(matchlib, mode = DUMP_SHORT):
-    match = None if matchlib is None else HWL.hwLibrary.find('./npp:Unit[@id="%s"]/npp:Connect' % matchlib, ns)
-    return _dumpUnit(hwConfig.find('.//npp:Unit[@id="%s"]' % ROOT_ID, ns), match, DUMP_ALL, mode)
+    match = None if matchlib is None else HWL.hwLibrary.find('./emt:Unit[@id="%s"]/emt:Connect' % matchlib, ns)
+    return _dumpUnit(hwConfig.find('.//emt:Unit[@id="%s"]' % ROOT_ID, ns), match, DUMP_ALL, mode)
 
 def getUnit(unitId, matchlib, mode = DUMP_FULL):
-    match = None if matchlib is None else HWL.hwLibrary.find('./npp:Unit[@id="%s"]/npp:Connect' % matchlib, ns)
-    return _dumpUnit(hwConfig.find('.//npp:Unit[@id="%s"]' % unitId, ns), match, DUMP_ONE, mode)
+    match = None if matchlib is None else HWL.hwLibrary.find('./emt:Unit[@id="%s"]/emt:Connect' % matchlib, ns)
+    return _dumpUnit(hwConfig.find('.//emt:Unit[@id="%s"]' % unitId, ns), match, DUMP_ONE, mode)
 
 def setUnitTag(unitId, tag:str = ''):
     if unitId == ROOT_ID: raise AssertionError()
     s = MU.normalTag(tag)
-    hwConfig.find('.//npp:Unit[@id="%s"]' % unitId, ns).set('tag', s)
+    hwConfig.find('.//emt:Unit[@id="%s"]' % unitId, ns).set('tag', s)
     return s
 
 def setUnitAlias(unitId, alias:str = ''):
     if unitId == ROOT_ID: raise AssertionError()
-    hwConfig.find('.//npp:Unit[@id="%s"]' % unitId, ns).set('alias', alias)
+    hwConfig.find('.//emt:Unit[@id="%s"]' % unitId, ns).set('alias', alias)
 
 def idByTag(tag):
-    return hwConfig.find('.//npp:Unit[@tag="%s"]' % MU.normalTag(tag), ns).get('id')
+    return hwConfig.find('.//emt:Unit[@tag="%s"]' % MU.normalTag(tag), ns).get('id')
 
 class AddError(Exception):
     pass
 
 def addUnit(libId, unitId, addr):
-    connector = HWL.hwLibrary.find('./npp:Unit[@id="%s"]/npp:Connect' % libId, ns)
-    unit = hwConfig.find('.//npp:Unit[@id="%s"]' % unitId, ns)
-    slot = HWL.hwLibrary.find('./npp:Unit[@id="%s"]/npp:Slot[@addr="%s"]' %
+    connector = HWL.hwLibrary.find('./emt:Unit[@id="%s"]/emt:Connect' % libId, ns)
+    unit = hwConfig.find('.//emt:Unit[@id="%s"]' % unitId, ns)
+    slot = HWL.hwLibrary.find('./emt:Unit[@id="%s"]/emt:Slot[@addr="%s"]' %
                               (unit.get('lib'), addr) , ns)
     if not MU.is_compatible(conn = connector, slot = slot):
         raise AddError('Library unit incompatible to slot')
-    lib = HWL.hwLibrary.find('./npp:Unit[@id="%s"]' % libId, ns)
-    old_unit = unit.find('./npp:Unit[@addr="%s"]' % addr, ns)
+    lib = HWL.hwLibrary.find('./emt:Unit[@id="%s"]' % libId, ns)
+    old_unit = unit.find('./emt:Unit[@addr="%s"]' % addr, ns)
     #Create unit and NOT copy all the data from lib
     new_unit = ET.SubElement(unit,nsURI+'Unit', nsmap=nsMap )
     new_unit.attrib.update({'id' : str(uid()),
@@ -305,18 +305,18 @@ def addUnit(libId, unitId, addr):
     #Move old unit childs, if present
     if old_unit is not None:
         new_unit.set('alias',old_unit.get('alias'))
-        for child in old_unit.findall('./npp:Unit', ns):
+        for child in old_unit.findall('./emt:Unit', ns):
             child_conn = get_conn(child)
             # check slot with the same addr
             new_slot = next ((slot for slot in HWL.hwLibrary.findall(
-                './npp:Unit[@id="%s"]/npp:Slot[@addr="%s"]' % (new_unit.get('lib'), child.get('addr')), ns) if new_unit.find(
-                    './npp:Unit[@addr="%s"]' % slot.get('addr'), ns) is None and MU.is_compatible(
+                './emt:Unit[@id="%s"]/emt:Slot[@addr="%s"]' % (new_unit.get('lib'), child.get('addr')), ns) if new_unit.find(
+                    './emt:Unit[@addr="%s"]' % slot.get('addr'), ns) is None and MU.is_compatible(
                         conn = child_conn, slot = slot)), None)
             if new_slot is None:
                 # find any compatible free slot
                 new_slot = next ((slot for slot in HWL.hwLibrary.findall(
-                    './npp:Unit[@id="%s"]/npp:Slot' % new_unit.get('lib'), ns) if new_unit.find(
-                        './npp:Unit[@addr="%s"]' % slot.get('addr'), ns) is None and MU.is_compatible(
+                    './emt:Unit[@id="%s"]/emt:Slot' % new_unit.get('lib'), ns) if new_unit.find(
+                        './emt:Unit[@addr="%s"]' % slot.get('addr'), ns) is None and MU.is_compatible(
                             conn = child_conn, slot = slot)), None)
             if new_slot is not None:
                 new_unit.append(child)
@@ -326,16 +326,16 @@ def addUnit(libId, unitId, addr):
 
 def delUnit(unitId):
     if unitId == ROOT_ID: raise AssertionError()
-    unit = hwConfig.find('.//npp:Unit[@id="%s"]' % unitId, ns)
+    unit = hwConfig.find('.//emt:Unit[@id="%s"]' % unitId, ns)
     if unit is None: raise AssertionError()
     #Reconnect chain
     #find chained subunits
-    chslot = HWL.hwLibrary.find('./npp:Unit[@id="%s"]/npp:Slot[@chain="1"]' % unit.get('lib'), ns)
-    chained = None if chslot is None else unit.find('./npp:Unit[@addr="%s"]' % chslot.get('addr'), ns)
+    chslot = HWL.hwLibrary.find('./emt:Unit[@id="%s"]/emt:Slot[@chain="1"]' % unit.get('lib'), ns)
+    chained = None if chslot is None else unit.find('./emt:Unit[@addr="%s"]' % chslot.get('addr'), ns)
     parent = unit.getparent()
     if chained is not None:
-        connector = HWL.hwLibrary.find('./npp:Unit[@id="%s"]/npp:Connect' % chained.get('lib'), ns)
-        slot = HWL.hwLibrary.find('./npp:Unit[@id="%s"]/npp:Slot[@chain="1"]' % parent.get('lib'), ns)
+        connector = HWL.hwLibrary.find('./emt:Unit[@id="%s"]/emt:Connect' % chained.get('lib'), ns)
+        slot = HWL.hwLibrary.find('./emt:Unit[@id="%s"]/emt:Slot[@chain="1"]' % parent.get('lib'), ns)
         if MU.is_compatible(conn = connector, slot = slot):
             parent.append(chained)
             chained.attrib.update({'addr' : unit.get('addr')})
@@ -347,8 +347,8 @@ def delUnit(unitId):
 def getUnitAddr(unitId):
     addr = ''
     counter = 0 # chain counter
-    unit = hwConfig.find('.//npp:Unit[@id="%s"]' % unitId, ns)
-    slot = HWL.hwLibrary.find('./npp:Unit[@id="%s"]/npp:Slot[@addr="%s"]' %
+    unit = hwConfig.find('.//emt:Unit[@id="%s"]' % unitId, ns)
+    slot = HWL.hwLibrary.find('./emt:Unit[@id="%s"]/emt:Slot[@addr="%s"]' %
                               (unit.getparent().get('lib'), unit.get('addr')), ns)
     while slot.get('type') != 'ROOT':
         if slot.get('chain'):
@@ -360,7 +360,7 @@ def getUnitAddr(unitId):
                                addr)
             counter = 0
         unit = unit.getparent()
-        slot = HWL.hwLibrary.find('./npp:Unit[@id="%s"]/npp:Slot[@addr="%s"]' %
+        slot = HWL.hwLibrary.find('./emt:Unit[@id="%s"]/emt:Slot[@addr="%s"]' %
                                   (unit.getparent().get('lib'), unit.get('addr')), ns)
     else:
         if counter: addr ='%s%s/%s' % (chainaddr,'@' + str(counter),addr)
@@ -376,7 +376,7 @@ def splitAddr(addr):
     return [_termtodict(term) for term in addr.split('/')]
 
 def unitByAddr(addr):
-    unit = hwConfig.find('./npp:Unit/npp:Unit', ns)
+    unit = hwConfig.find('./emt:Unit/emt:Unit', ns)
     if unit is None:
         return {}
     if len(addr):
@@ -386,8 +386,8 @@ def unitByAddr(addr):
                 counter = int(subterm[1])
                 while counter:
                     counter -= 1
-                    unit = unit.find('./npp:Unit[@addr="%s"]' % subterm[0], ns)
-            else: unit = unit.find('./npp:Unit[@addr="%s"]' % term, ns)
+                    unit = unit.find('./emt:Unit[@addr="%s"]' % subterm[0], ns)
+            else: unit = unit.find('./emt:Unit[@addr="%s"]' % term, ns)
     return {} if unit is None else getUnit(unit.get('id'), None)         
                              
 

@@ -1,0 +1,277 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<root xmlns="http://www.iec.ch/61850/2003/SCL">
+	<LN lnType="in4" prefix="IN" lnClass="GGIO" inst="1" desc="Группа дискретных входов">
+		<Private type="mtNppNodeCfg"/>
+		<DOI name="Mod">
+			<DAI name="ctlModel">
+				<VAL>value</VAL>
+			</DAI>
+			<DAI name="sboClass">
+				<VAL>value</VAL>
+			</DAI>
+			<DAI name="sboTimeout">
+				<VAL>value</VAL>
+			</DAI>
+			<DAI name="operTimeout">
+				<VAL>value</VAL>
+			</DAI>
+		</DOI>
+		<DOI name="OscNumInh">
+			<DAI name="setVal">
+				<VAL>value</VAL>
+			</DAI>
+			<SDI name="units">
+				<DAI name="SIUnit">
+					<VAL>value</VAL>
+				</DAI>
+				<DAI name="multiplier">
+					<VAL>value</VAL>
+				</DAI>
+			</SDI>
+			<DAI name="minVal">
+				<VAL>value</VAL>
+			</DAI>
+			<DAI name="maxVal">
+				<VAL>value</VAL>
+			</DAI>
+			<DAI name="stepSize">
+				<VAL>value</VAL>
+			</DAI>
+		</DOI>
+		<DOI name="OpDlTmms1">
+			<DAI name="setVal">
+				<VAL>value</VAL>
+			</DAI>
+			<SDI name="units">
+				<DAI name="SIUnit">
+					<VAL>value</VAL>
+				</DAI>
+				<DAI name="multiplier">
+					<VAL>value</VAL>
+				</DAI>
+			</SDI>
+			<DAI name="minVal">
+				<VAL>value</VAL>
+			</DAI>
+			<DAI name="maxVal">
+				<VAL>value</VAL>
+			</DAI>
+			<DAI name="stepSize">
+				<VAL>value</VAL>
+			</DAI>
+		</DOI>
+		<DOI name="OpDlTmms2">
+			<DAI name="setVal">
+				<VAL>value</VAL>
+			</DAI>
+			<SDI name="units">
+				<DAI name="SIUnit">
+					<VAL>value</VAL>
+				</DAI>
+				<DAI name="multiplier">
+					<VAL>value</VAL>
+				</DAI>
+			</SDI>
+			<DAI name="minVal">
+				<VAL>value</VAL>
+			</DAI>
+			<DAI name="maxVal">
+				<VAL>value</VAL>
+			</DAI>
+			<DAI name="stepSize">
+				<VAL>value</VAL>
+			</DAI>
+		</DOI>
+		<DOI name="OpDlTmms3">
+			<DAI name="setVal">
+				<VAL>value</VAL>
+			</DAI>
+			<SDI name="units">
+				<DAI name="SIUnit">
+					<VAL>value</VAL>
+				</DAI>
+				<DAI name="multiplier">
+					<VAL>value</VAL>
+				</DAI>
+			</SDI>
+			<DAI name="minVal">
+				<VAL>value</VAL>
+			</DAI>
+			<DAI name="maxVal">
+				<VAL>value</VAL>
+			</DAI>
+			<DAI name="stepSize">
+				<VAL>value</VAL>
+			</DAI>
+		</DOI>
+		<DOI name="OpDlTmms4">
+			<DAI name="setVal">
+				<VAL>value</VAL>
+			</DAI>
+			<SDI name="units">
+				<DAI name="SIUnit">
+					<VAL>value</VAL>
+				</DAI>
+				<DAI name="multiplier">
+					<VAL>value</VAL>
+				</DAI>
+			</SDI>
+			<DAI name="minVal">
+				<VAL>value</VAL>
+			</DAI>
+			<DAI name="maxVal">
+				<VAL>value</VAL>
+			</DAI>
+			<DAI name="stepSize">
+				<VAL>value</VAL>
+			</DAI>
+		</DOI>
+	</LN>
+	<LN lnType="out4" prefix="OUT" lnClass="GGIO" inst="1" desc="Группа дискретных выходов">
+		<Private type="mtNppNodeCfg"/>
+		<DOI name="Mod">
+			<DAI name="ctlModel">
+				<VAL>value</VAL>
+			</DAI>
+			<DAI name="sboClass">
+				<VAL>value</VAL>
+			</DAI>
+			<DAI name="sboTimeout">
+				<VAL>value</VAL>
+			</DAI>
+			<DAI name="operTimeout">
+				<VAL>value</VAL>
+			</DAI>
+		</DOI>
+		<DOI name="InRef1">
+			<DAI name="setSrcRef">
+				<VAL>value</VAL>
+			</DAI>
+			<DAI name="setSrcCB">
+				<VAL>value</VAL>
+			</DAI>
+		</DOI>
+		<DOI name="InRef1">
+			<DAI name="setSrcRef">
+				<VAL>value</VAL>
+			</DAI>
+			<DAI name="setSrcCB">
+				<VAL>value</VAL>
+			</DAI>
+		</DOI>
+		<DOI name="InRef1">
+			<DAI name="setSrcRef">
+				<VAL>value</VAL>
+			</DAI>
+			<DAI name="setSrcCB">
+				<VAL>value</VAL>
+			</DAI>
+		</DOI>
+		<DOI name="InRef1">
+			<DAI name="setSrcRef">
+				<VAL>value</VAL>
+			</DAI>
+			<DAI name="setSrcCB">
+				<VAL>value</VAL>
+			</DAI>
+		</DOI>
+	</LN>
+	<LN lnType="out4" prefix="OUT" lnClass="GGIO" inst="2" desc="Группа дискретных выходов">
+		<Private type="mtNppNodeCfg"/>
+		<DOI name="Mod">
+			<DAI name="ctlModel">
+				<VAL>value</VAL>
+			</DAI>
+			<DAI name="sboClass">
+				<VAL>value</VAL>
+			</DAI>
+			<DAI name="sboTimeout">
+				<VAL>value</VAL>
+			</DAI>
+			<DAI name="operTimeout">
+				<VAL>value</VAL>
+			</DAI>
+		</DOI>
+		<DOI name="InRef1">
+			<DAI name="setSrcRef">
+				<VAL>value</VAL>
+			</DAI>
+			<DAI name="setSrcCB">
+				<VAL>value</VAL>
+			</DAI>
+		</DOI>
+		<DOI name="InRef1">
+			<DAI name="setSrcRef">
+				<VAL>value</VAL>
+			</DAI>
+			<DAI name="setSrcCB">
+				<VAL>value</VAL>
+			</DAI>
+		</DOI>
+		<DOI name="InRef1">
+			<DAI name="setSrcRef">
+				<VAL>value</VAL>
+			</DAI>
+			<DAI name="setSrcCB">
+				<VAL>value</VAL>
+			</DAI>
+		</DOI>
+		<DOI name="InRef1">
+			<DAI name="setSrcRef">
+				<VAL>value</VAL>
+			</DAI>
+			<DAI name="setSrcCB">
+				<VAL>value</VAL>
+			</DAI>
+		</DOI>
+	</LN>
+	<LN lnType="out4" prefix="OUT" lnClass="GGIO" inst="3" desc="Группа дискретных выходов">
+		<Private type="mtNppNodeCfg"/>
+		<DOI name="Mod">
+			<DAI name="ctlModel">
+				<VAL>value</VAL>
+			</DAI>
+			<DAI name="sboClass">
+				<VAL>value</VAL>
+			</DAI>
+			<DAI name="sboTimeout">
+				<VAL>value</VAL>
+			</DAI>
+			<DAI name="operTimeout">
+				<VAL>value</VAL>
+			</DAI>
+		</DOI>
+		<DOI name="InRef1">
+			<DAI name="setSrcRef">
+				<VAL>value</VAL>
+			</DAI>
+			<DAI name="setSrcCB">
+				<VAL>value</VAL>
+			</DAI>
+		</DOI>
+		<DOI name="InRef1">
+			<DAI name="setSrcRef">
+				<VAL>value</VAL>
+			</DAI>
+			<DAI name="setSrcCB">
+				<VAL>value</VAL>
+			</DAI>
+		</DOI>
+		<DOI name="InRef1">
+			<DAI name="setSrcRef">
+				<VAL>value</VAL>
+			</DAI>
+			<DAI name="setSrcCB">
+				<VAL>value</VAL>
+			</DAI>
+		</DOI>
+		<DOI name="InRef1">
+			<DAI name="setSrcRef">
+				<VAL>value</VAL>
+			</DAI>
+			<DAI name="setSrcCB">
+				<VAL>value</VAL>
+			</DAI>
+		</DOI>
+	</LN>
+</root>

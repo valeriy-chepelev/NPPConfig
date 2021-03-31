@@ -9,13 +9,13 @@ lang = 'RU'
 
 def getLangStat():
     langs = {item.get('lang') for item in hwLibrary.iter() if 'lang' in item.attrib}
-    summ = len({term.get('name') for term in hwLibrary.findall('./npp:Term', ns)}) + 2 * len(
-        hwLibrary.findall('./npp:Unit', ns))
+    summ = len({term.get('name') for term in hwLibrary.findall('./emt:Term', ns)}) + 2 * len(
+        hwLibrary.findall('./emt:Unit', ns))
     summ = float(summ) if summ else 1.0
     return {g : str(int( 0.5 + 100.0 * float(
-        len(hwLibrary.findall('./npp:Term[@lang="%s"]' % g, ns)) +
-        len(hwLibrary.findall('./npp:Unit/npp:Name[@lang="%s"]' % g, ns)) +
-        len(hwLibrary.findall('./npp:Unit/npp:Description[@lang="%s"]' % g, ns))) /
+        len(hwLibrary.findall('./emt:Term[@lang="%s"]' % g, ns)) +
+        len(hwLibrary.findall('./emt:Unit/emt:Name[@lang="%s"]' % g, ns)) +
+        len(hwLibrary.findall('./emt:Unit/emt:Description[@lang="%s"]' % g, ns))) /
                              summ)) + '%'
             for g in langs}
 
@@ -25,7 +25,7 @@ def loadLib(path, name = 'NPP module description.xml'):
         return
     tree = ET.parse(os.path.join(path,name))
     hwLibrary = tree.getroot()
-    for unit in hwLibrary.findall('./npp:Unit', ns):
+    for unit in hwLibrary.findall('./emt:Unit', ns):
         unit.set('id', unit.get('edition')+'-'+unit.get('ver')+'-'+unit.get('rev'))
         unit.set('tag','')
     #TODO: check id's is uniq
@@ -37,10 +37,10 @@ def loadLib(path, name = 'NPP module description.xml'):
 
 def listTerms():
     return {term.get('name') : term.text for term in
-            hwLibrary.findall('./npp:Term[@lang="%s"]' % lang, ns)}
+            hwLibrary.findall('./emt:Term[@lang="%s"]' % lang, ns)}
 
 def getTerm(id):
-    return hwLibrary.find('./npp:Term[@name="%s"][@lang="%s"]' % (id,lang), ns).text
+    return hwLibrary.find('./emt:Term[@name="%s"][@lang="%s"]' % (id,lang), ns).text
 
 # Units
 
@@ -57,28 +57,28 @@ def _dumpUnit(unit, matching_slot = None):
             'name': MU.safeName(unit, lang),
             'desc': MU.safeDesc(unit, lang),
             'prop': [prop.get('name') for prop in
-                     unit.findall('./npp:Property', ns)],
+                     unit.findall('./emt:Property', ns)],
             'req': [_recodeReq(dict(req.items())) for req in
-                    unit.findall('./npp:Required', ns)],
+                    unit.findall('./emt:Required', ns)],
             #TODO: 'status'
             'tag': unit.get('tag'),
-            'match': matching_slot is not None and MU.is_compatible(conn = unit.find('./npp:Connect', ns),
+            'match': matching_slot is not None and MU.is_compatible(conn = unit.find('./emt:Connect', ns),
                                                                     slot = matching_slot) }
     
  
 def getUnit(id, matching_slot = None):
-    return _dumpUnit(hwLibrary.find('./npp:Unit[@id="%s"]' % id, ns), matching_slot)
+    return _dumpUnit(hwLibrary.find('./emt:Unit[@id="%s"]' % id, ns), matching_slot)
 
 def idByTag(tag):
-    return hwLibrary.find('./npp:Unit[@tag="%s"]' % MU.normalTag(tag), ns).get('id')
+    return hwLibrary.find('./emt:Unit[@tag="%s"]' % MU.normalTag(tag), ns).get('id')
     
 def setUnitTag(id, tag:str = ''):
     s = MU.normalTag(tag)
-    hwLibrary.find('.//npp:Unit[@id="%s"]' % id, ns).set('tag', s)
+    hwLibrary.find('.//emt:Unit[@id="%s"]' % id, ns).set('tag', s)
     return s
                 
 def listUnits(matching_slot = None):
-    return [_dumpUnit(unit, matching_slot) for unit in hwLibrary.findall('./npp:Unit', ns)]
+    return [_dumpUnit(unit, matching_slot) for unit in hwLibrary.findall('./emt:Unit', ns)]
 
 def setLang(newlang):
     global lang
